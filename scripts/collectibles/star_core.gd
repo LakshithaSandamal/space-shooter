@@ -35,6 +35,6 @@ func _on_body_entered(body: Node2D) -> void:
 		return
 	if body is StarfallCourierController:
 		_active = false
-		monitoring = false
+		set_deferred("monitoring", false)
 		collected.emit(core_value)
 		queue_free()
