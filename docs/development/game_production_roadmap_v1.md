@@ -74,6 +74,13 @@ Create the smallest correct playable Starfall Courier foundation.
 
 Launching `res://scenes/main.tscn` must show the Courier in Courier Corridor. Tapping/clicking the left or right half of the screen moves exactly one lane. Keyboard left/right or A/D supports desktop testing. Attempts to move beyond the outer lanes are ignored.
 
+## Completion record
+
+- Status: **COMPLETE**
+- Completed: `2026-08-20`
+- Godot CI: 4.7.1 import/parse, resource loading, Phase 1 lane validation, main-scene smoke test, and existing visual-lab smoke tests passed.
+- The implementation intentionally contains no Phase 2 gameplay systems.
+
 ---
 
 # Phase 2 — First Playable Survival Loop
@@ -348,8 +355,8 @@ A signed release candidate can be installed on target devices, complete the full
 
 | Phase | Status |
 |---|---|
-| 1. Core Run Foundation | **ACTIVE** |
-| 2. First Playable Survival Loop | Planned |
+| 1. Core Run Foundation | **COMPLETE** |
+| 2. First Playable Survival Loop | **NEXT / PLANNED** |
 | 3. Skill / Combo / Near Miss | Planned |
 | 4. Core Power-Ups | Planned |
 | 5. Sectors / Threat / Hazards | Planned |
