@@ -1,6 +1,6 @@
 # Starfall Courier Documentation
 
-This folder contains the canonical product, visual-design, and Godot architecture sources for the project.
+This folder contains the canonical product, visual-design, production-roadmap, and Godot architecture sources for the project.
 
 Godot ignores this folder because `docs/.gdignore` is present.
 
@@ -13,11 +13,14 @@ For AI agents and developers:
 3. `visual_design/visual_system_v0.md` defines semantic colors, sizing, typography/iconography, procedural rendering direction, and the base visual system.
 4. `visual_design/asset_drawing_system_v1.md` defines the canonical senior production drawing language and polish standard.
 5. `visual_design/final_visual_inventory_v1.md` defines the canonical final visual inventory, variants, states, animation requirements, ownership, and QA coverage.
-6. `godot_architecture.md` defines how the project should be structured in Godot.
-7. `node_selection_guide.md` defines how to choose Godot nodes for requirements.
-8. `instructions/godot_ai_instructions.md` defines general coding-agent rules.
-9. `instructions/visual_ai_instructions.md` adds rules for visual/UI/VFX/shader tasks.
-10. Existing project code/scenes define established local implementation conventions.
+6. `development/game_production_roadmap_v1.md` defines the canonical 10-phase implementation sequence and current production phase.
+7. `godot_architecture.md` defines how the project should be structured in Godot.
+8. `node_selection_guide.md` defines how to choose Godot nodes for requirements.
+9. `instructions/godot_ai_instructions.md` defines general coding-agent rules.
+10. `instructions/visual_ai_instructions.md` adds rules for visual/UI/VFX/shader tasks.
+11. Existing project code/scenes define established local implementation conventions.
+
+The roadmap defines sequence, not permission to prebuild later systems. The current user request still decides what is implemented now.
 
 The historical `visual_design/final_visual_inventory_v0.md` may be used for implementation-history context, but new visual production work follows v1.
 
@@ -53,6 +56,31 @@ The player is a courier, not a soldier. Do not infer shooting mechanics from the
 
 ---
 
+## Development roadmap
+
+### `development/game_production_roadmap_v1.md`
+
+Defines the 10 production phases:
+
+1. Core Run Foundation,
+2. First Playable Survival Loop,
+3. Skill / Combo / Near Miss,
+4. Core Power-Ups,
+5. Sectors / Threat / Hazard Expansion,
+6. Routes / Contracts / Extraction / Elite Events,
+7. Career Progression,
+8. Complete UX / Menus / Settings,
+9. Production Polish / Audio / Performance / Device Readiness,
+10. Release Candidate / Store / Launch Readiness.
+
+Current phase:
+
+> **Phase 1 — Core Run Foundation**
+
+The phase is complete only after its documented completion test and automated Godot validation pass.
+
+---
+
 ## Visual design
 
 See:
@@ -77,38 +105,11 @@ Defines the visual semantics:
 
 ### `visual_design/asset_drawing_system_v1.md`
 
-Defines **how production art must be drawn**:
-
-- silhouette hierarchy,
-- structural planes,
-- material separation,
-- functional details,
-- controlled energy/glow,
-- detail-density budgets,
-- sector depth construction,
-- richer ship anatomy,
-- collectible/power-up structure,
-- hazard detailing,
-- route/extraction/Hunter treatment,
-- VFX timing/motion grammar,
-- UI construction,
-- shader discipline,
-- senior polish and anti-patterns.
+Defines how production art must be drawn through silhouette hierarchy, structural planes, material separation, functional details, controlled energy/glow, motion, density budgets, and senior polish rules.
 
 ### `visual_design/final_visual_inventory_v1.md`
 
-Defines **what final visual coverage must exist**:
-
-- production quality tiers,
-- asset families,
-- target sizes,
-- minimum variant counts,
-- required states,
-- animation requirements,
-- production ownership,
-- visual-lab review requirements,
-- technical/art QA gates,
-- explicit exclusions under the current game concept.
+Defines final visual coverage, sizes, minimum variants, states, animation requirements, ownership, lab review requirements, and QA gates.
 
 ---
 
@@ -116,34 +117,15 @@ Defines **what final visual coverage must exist**:
 
 ### `godot_architecture.md`
 
-Defines:
-
-- scene composition,
-- ownership,
-- communication,
-- Resources,
-- run-state ownership,
-- fair procedural-generation rules,
-- folder direction,
-- validation.
+Defines scene composition, ownership, communication, Resources, run-state ownership, fairness, folder direction, and validation.
 
 ### `node_selection_guide.md`
 
-Behavior-first node selection for:
-
-- courier ship,
-- lanes,
-- hazards,
-- Star Cores,
-- power-ups,
-- Near-Miss detection,
-- route gates,
-- HUD,
-- data/configuration.
+Behavior-first node selection for courier ship, lanes, hazards, Star Cores, power-ups, Near Miss, route gates, HUD, and data/configuration.
 
 ---
 
-## Production visual implementation
+## Production implementation
 
 Reusable visual code:
 
@@ -157,18 +139,16 @@ Shared shaders:
 res://shaders/visual/
 ```
 
-Current procedural implementation includes:
+Phase-oriented gameplay code is created only as each phase needs it. Phase 1 introduces:
 
-- semantic visual tokens,
-- font registry,
-- UI theme factory,
-- sector backgrounds,
-- ship family renderer,
-- collectible/power-up/hazard/route renderer,
-- effect renderer,
-- shared background/energy/time-warp/sector/UI shaders.
-
-The current implementation is a baseline. v1 docs intentionally set a higher quality target than the first visual-lab pass.
+```text
+res://scripts/core/run_controller.gd
+res://scripts/core/run_input_router.gd
+res://scripts/player/courier_controller.gd
+res://scripts/ui/run_hud.gd
+res://scenes/player/courier.tscn
+res://scenes/ui/run_hud.tscn
+```
 
 ---
 
@@ -180,20 +160,7 @@ Combined review scene:
 res://dev/visual_lab/visual_lab.tscn
 ```
 
-Independent pages:
-
-```text
-res://dev/visual_lab/pages/backgrounds.tscn
-res://dev/visual_lab/pages/ships.tscn
-res://dev/visual_lab/pages/collectibles_powerups.tscn
-res://dev/visual_lab/pages/hazards_routes.tscn
-res://dev/visual_lab/pages/effects.tscn
-res://dev/visual_lab/pages/ui.tscn
-```
-
-The lab is development-only and must never become a production gameplay dependency.
-
-The v1 quality target expects the lab to evolve toward side-by-side gameplay-scale, enlarged-detail, state, silhouette, and cross-background comparisons.
+Production code must never depend on `dev/`.
 
 ---
 
@@ -218,7 +185,7 @@ The v1 quality target expects the lab to evolve toward side-by-side gameplay-sca
 
 ## Validation
 
-GitHub Actions installs official Godot 4.7.1 and validates project import, required scripts/scenes/shaders, the main scene, and visual-lab pages.
+GitHub Actions installs official Godot 4.7.1 and validates project import, required scripts/scenes/shaders, phase-specific logic tests, the main scene, and visual-lab pages.
 
 Local validation when Godot is installed:
 
