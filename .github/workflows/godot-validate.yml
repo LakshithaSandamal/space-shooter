@@ -57,6 +57,16 @@ jobs:
             exit 1
           fi
 
+      - name: Validate Phase 1 lane logic
+        shell: bash
+        run: |
+          set -euo pipefail
+          godot --headless --path . --script res://dev/ci/validate_phase1.gd 2>&1 | tee godot-phase1.log
+          if grep -E 'SCRIPT ERROR:|SHADER ERROR:|^ERROR:' godot-phase1.log; then
+            echo "Godot reported Phase 1 validation errors." >&2
+            exit 1
+          fi
+
       - name: Smoke-test main scene
         shell: bash
         run: |
@@ -99,6 +109,7 @@ jobs:
           path: |
             godot-import.log
             godot-resources.log
+            godot-phase1.log
             godot-main.log
             godot-scenes.log
           if-no-files-found: ignore
