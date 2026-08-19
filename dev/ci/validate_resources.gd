@@ -4,6 +4,15 @@ const RESOURCES: PackedStringArray = [
 	"res://scenes/main.tscn",
 	"res://scenes/player/courier.tscn",
 	"res://scenes/ui/run_hud.tscn",
+	"res://scenes/hazards/standard_asteroid.tscn",
+	"res://scenes/collectibles/star_core.tscn",
+	"res://scenes/systems/wave_spawner.tscn",
+	"res://resources/patterns/phase2/wave_left_blocked.tres",
+	"res://resources/patterns/phase2/wave_right_blocked.tres",
+	"res://resources/patterns/phase2/wave_center_blocked.tres",
+	"res://resources/patterns/phase2/wave_left_center_blocked.tres",
+	"res://resources/patterns/phase2/wave_center_right_blocked.tres",
+	"res://resources/patterns/phase2/wave_left_right_blocked.tres",
 	"res://dev/visual_lab/visual_lab.tscn",
 	"res://dev/visual_lab/pass1_review.tscn",
 	"res://dev/visual_lab/pages/backgrounds.tscn",
@@ -20,9 +29,9 @@ const RESOURCES: PackedStringArray = [
 ]
 
 func _initialize() -> void:
-	var failed := false
-	for resource_path in RESOURCES:
-		var resource := ResourceLoader.load(resource_path)
+	var failed: bool = false
+	for resource_path: String in RESOURCES:
+		var resource: Resource = ResourceLoader.load(resource_path)
 		if resource == null:
 			push_error("Failed to load required resource: %s" % resource_path)
 			failed = true

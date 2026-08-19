@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="StarfallLaneWavePattern" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/patterns/lane_wave_pattern.gd" id="1_pattern"]
+
+[resource]
+script = ExtResource("1_pattern")
+pattern_id = &"center_blocked"
+blocked_lanes = PackedInt32Array(1)
+core_lanes = PackedInt32Array(0, 2)
+minimum_distance_m = 80.0

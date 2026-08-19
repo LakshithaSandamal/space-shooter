@@ -14,24 +14,26 @@ const CENTER_LANE: int = 1
 @export var lane_change_speed: float = 1125.0
 @export_range(0.0, 0.25, 0.01) var visual_bank_radians: float = 0.08
 
-@onready var _visual: Node2D = %Visual
+@onready var _visual: StarfallShipVisual = %Visual
 
 var current_lane: int = CENTER_LANE
 var _target_x: float = 360.0
 var _is_changing_lane: bool = false
+var _active: bool = true
 
 func _ready() -> void:
-	current_lane = clampi(starting_lane, MIN_LANE, MAX_LANE)
-	_target_x = _lane_x(current_lane)
-	position.x = _target_x
-	velocity = Vector2.ZERO
+	reset_for_run()
 
 func _physics_process(delta: float) -> void:
+	if not _active:
+		velocity = Vector2.ZERO
+		_update_visual_bank(delta)
+		return
 	_update_lane_motion(delta)
 	_update_visual_bank(delta)
 
 func request_lane_change(direction: int) -> bool:
-	if direction == 0:
+	if not _active or direction == 0:
 		return false
 
 	var lane_step: int = -1 if direction < 0 else 1
@@ -45,6 +47,31 @@ func request_lane_change(direction: int) -> bool:
 	lane_changed.emit(current_lane)
 	return true
 
+func reset_for_run() -> void:
+	_active = true
+	current_lane = clampi(starting_lane, MIN_LANE, MAX_LANE)
+	_target_x = _lane_x(current_lane)
+	position.x = _target_x
+	velocity = Vector2.ZERO
+	_is_changing_lane = false
+	collision_layer = 1
+	if is_node_ready():
+		_visual.rotation = 0.0
+		_visual.visual_state = StarfallShipVisual.VisualState.NORMAL
+		_visual.queue_redraw()
+	lane_changed.emit(current_lane)
+
+func crash() -> void:
+	if not _active:
+		return
+	_active = false
+	velocity = Vector2.ZERO
+	_is_changing_lane = false
+	collision_layer = 0
+	_visual.rotation = 0.0
+	_visual.visual_state = StarfallShipVisual.VisualState.CRASHED
+	_visual.queue_redraw()
+
 func get_lane_index() -> int:
 	return current_lane
 
@@ -53,6 +80,9 @@ func get_lane_center_x(lane_index: int) -> float:
 
 func is_changing_lane() -> bool:
 	return _is_changing_lane
+
+func is_active() -> bool:
+	return _active
 
 func _update_lane_motion(delta: float) -> void:
 	if not _is_changing_lane:
@@ -73,7 +103,7 @@ func _update_lane_motion(delta: float) -> void:
 
 func _update_visual_bank(delta: float) -> void:
 	var target_rotation: float = 0.0
-	if _is_changing_lane:
+	if _active and _is_changing_lane:
 		target_rotation = signf(_target_x - position.x) * visual_bank_radians
 	_visual.rotation = lerp_angle(_visual.rotation, target_rotation, minf(1.0, delta * 12.0))
 
