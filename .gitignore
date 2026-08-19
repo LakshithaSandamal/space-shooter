@@ -1,0 +1,8 @@
+# Godot 4+ generated files
+.godot/
+
+# macOS
+.DS_Store
+
+# Local/exported builds
+builds/
