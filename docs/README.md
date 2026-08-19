@@ -1,52 +1,91 @@
-# Space Shooter Documentation
+# Starfall Courier Documentation
 
-This folder contains the human-readable architecture and Godot usage rules for the project.
+This folder contains the human-readable product/design and Godot architecture sources for the project.
 
-Godot ignores this folder because it contains a `.gdignore` marker. This keeps design documentation out of the Godot FileSystem dock and import scan.
+Godot ignores this folder because `docs/.gdignore` is present.
+
+## Source-of-truth order
+
+For AI agents and developers:
+
+1. The user's current explicit task defines the current implementation scope.
+2. `game_design/game_concept_v0.md` defines the canonical game identity and full design direction.
+3. `godot_architecture.md` defines how the project should be structured in Godot.
+4. `node_selection_guide.md` defines how to choose Godot nodes for requirements.
+5. Existing project code/scenes define local implementation conventions.
 
 ## Documents
 
-- `godot_architecture.md` — project architecture, scene boundaries, communication rules, data flow, naming, and folder structure.
-- `node_selection_guide.md` — practical rules for choosing the correct Godot node for each space-shooter requirement.
+### `game_design/game_concept_v0.md`
+
+Canonical **Starfall Courier v0 design bible**.
+
+Covers:
+
+- product identity,
+- three-lane gameplay,
+- run loop,
+- Star Cores,
+- combo,
+- Near Misses,
+- power-ups,
+- hazards,
+- sectors,
+- route choices,
+- contracts/extraction,
+- Threat,
+- elite events,
+- progression,
+- ships/mastery,
+- missions/achievements/statistics,
+- game modes,
+- visual/UI/audio direction,
+- AI implementation guardrails,
+- core-vs-future scope.
+
+### `godot_architecture.md`
+
+Godot 4.7 architecture rules tailored to Starfall Courier:
+
+- scene composition,
+- scene ownership,
+- communication,
+- Resources,
+- run-state ownership,
+- fair procedural-generation requirements,
+- folder direction,
+- validation.
+
+### `node_selection_guide.md`
+
+Behavior-first node selection for:
+
+- courier ship,
+- lanes,
+- hazards,
+- Star Cores,
+- power-ups,
+- Near-Miss detection,
+- route gates,
+- HUD,
+- data/configuration.
 
 ## Project baseline
 
 - Engine: Godot 4.7
-- Language: GDScript
-- Code style: statically typed GDScript
-- Game type: 2D space shooter
-- Architecture: scene composition with small, self-contained scenes
-- Communication: direct child calls for commands, signals for events, resources for reusable data
-- Global state: avoid by default; use Autoload only for truly project-wide lifetime concerns
+- Language: statically typed GDScript
+- Canonical game: **Starfall Courier**
+- Genre: portrait-mode sci-fi arcade survival / three-lane courier runner
+- Core control: tap left/right to move between three lanes
+- Player identity: courier, not soldier
+- Combat: not a core mechanic
+- Architecture: scene composition with small self-contained scenes
+- Communication: typed calls downward, signals outward/upward
+- Data: Resources when reusable serialized configuration is justified
+- Globals: avoid by default
 
-## Core design principles
+## Strongest design constraint
 
-1. Choose a scene root by what the object fundamentally is.
-2. Keep reusable scenes self-contained.
-3. Avoid hard-coded paths to nodes outside a scene.
-4. Prefer composition over deep scene or script inheritance.
-5. Prefer signals when a child reports something that happened.
-6. Prefer direct typed method calls when a parent tells a child to do something.
-7. Prefer `Resource` objects for reusable configuration and game data.
-8. Use `CharacterBody2D` for ships that are moved deliberately by code and need collision response.
-9. Use `Area2D` for hitboxes, hurtboxes, pickups, detection regions, and simple projectiles that only need overlap detection.
-10. Keep UI under `Control` nodes, usually inside a `CanvasLayer` when it must stay fixed to the screen.
-11. Use `snake_case` for files, folders, and groups; use `PascalCase` for node names.
-12. Add an Autoload only when the system must survive scene changes or truly has project-wide scope.
+> **Add depth around the original gameplay — never replace the original gameplay.**
 
-## Source material
-
-These rules are based on the uploaded Godot 4.7 tutorial set and the official Godot 4.7 documentation, especially:
-
-- Nodes and Scenes
-- Applying object-oriented principles in Godot
-- Scene organization
-- Project organization
-- When to use scenes versus scripts
-- Autoloads versus regular nodes
-- When and how to avoid using nodes for everything
-- Resources
-- Groups
-- Using CharacterBody2D/3D
-- Using Area2D
-- Canvas layers
+The repository name `space-shooter` is legacy/contextual and must not be used as justification to introduce shooting mechanics.
