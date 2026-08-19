@@ -1,133 +1,166 @@
-# Godot Architecture for Space Shooter
+# Godot 4.7 Architecture — Starfall Courier
 
 ## 1. Architecture goal
 
-This project should stay easy to understand, test, extend, and refactor as the game grows. Godot is scene-based, so the architecture should use scenes as reusable game objects rather than forcing a traditional service-heavy application architecture onto the engine.
+Starfall Courier is a portrait-mode three-lane arcade survival game.
 
-The default rule is:
+The architecture must support the full design direction without prebuilding the full design.
 
-> A reusable gameplay object should usually be a self-contained scene with a small typed script on its root node.
+Default principle:
 
-Examples:
+> A reusable gameplay object should usually be a self-contained scene with a small statically typed script on its root node.
 
-- Player ship -> `Player` scene
-- Enemy ship -> `Enemy` scene
-- Bullet -> `Projectile` scene
-- HUD -> `Hud` scene
-- Explosion -> `Explosion` scene
+Canonical product reference:
 
-The main scene composes these objects rather than implementing all behavior itself.
+- `docs/game_design/game_concept_v0.md`
 
-## 2. Core architecture principles
+AI operating reference:
 
-### 2.1 Self-contained scenes
+- `instructions/godot_ai_instructions.md`
 
-A reusable scene should contain the nodes and resources it needs to function.
+This document defines **how to structure the Godot project**, not which future feature should be implemented next.
 
-A `Player` scene should not assume that a node exists at a path such as:
+---
 
-```gdscript
-get_node("../../Main/Hud")
-```
+## 2. Core architectural model
 
-That creates a hidden dependency on the scene's environment and makes the player difficult to reuse or test.
+Godot is scene-based. Use that model directly instead of forcing a service-heavy application architecture onto the game.
 
-Instead:
+Likely game concepts that may deserve independent scenes when they are implemented:
 
-- expose configuration with exported typed properties,
-- expose commands through methods,
-- report events with signals,
-- inject required external references from the parent when truly necessary.
+- courier/player ship,
+- Star Core,
+- hazard types,
+- power-up pickups,
+- route gates,
+- HUD,
+- menus,
+- reusable VFX.
 
-### 2.2 Composition over deep inheritance
+The gameplay scene composes these objects.
 
-Prefer composing focused child nodes and components instead of building deep class trees such as:
+Do not create all scenes in advance.
 
-```text
-Ship
-  -> CombatShip
-    -> EnemyCombatShip
-      -> FastEnemyCombatShip
-```
+---
 
-Prefer reusable behavior components or small scene composition when behavior is shared.
+## 3. Self-contained scenes
 
-Potential components later:
+Reusable scenes should contain the nodes/resources needed for their own behavior.
 
-- health
-- damage receiver
-- weapon
-- movement controller
-- hitbox
-- hurtbox
-
-Do not create components before the game actually needs reuse.
-
-### 2.3 Parent coordinates, children report
-
-A practical communication rule:
-
-- Parent -> child: direct typed method call for commands.
-- Child -> parent/external context: signal for an event that already happened.
-
-Example:
-
-```gdscript
-# Parent tells a weapon to fire.
-weapon.fire()
-```
-
-```gdscript
-# Weapon reports that a shot was fired.
-signal fired(projectile: Node2D)
-```
-
-This keeps ownership and dependency direction clear.
-
-### 2.4 Avoid sibling dependencies
-
-Sibling nodes should not normally search for or control each other directly.
+A player scene must not assume an external HUD exists at a hard-coded path.
 
 Bad:
 
 ```gdscript
-get_node("../Hud").update_score(score)
+get_node("../../Main/Hud").set_combo(value)
 ```
 
-Better:
+Prefer:
 
-- the gameplay node emits a signal,
-- the common parent receives it,
-- the parent updates the HUD.
+- exported typed configuration,
+- typed public methods,
+- signals for outward events,
+- parent-injected external dependencies only when necessary.
 
-### 2.5 Use Resources for data
+A scene should know as little as possible about the larger tree.
 
-A `Resource` is preferred for reusable configuration and content data because it is lightweight, serializable, Inspector-friendly, and not part of the scene tree.
+---
 
-Possible future resources:
+## 4. Composition over deep inheritance
+
+Prefer small scenes and focused behavior over deep class trees.
+
+Do not build speculative hierarchies such as:
 
 ```text
-ship_stats.gd
-weapon_data.gd
-enemy_data.gd
-wave_data.gd
+GameEntity
+  -> MovingEntity
+    -> HazardEntity
+      -> AdvancedHazard
+```
+
+Introduce reusable components only when genuine reuse/complexity appears.
+
+Potential future components may include:
+
+- near-miss detector,
+- shield state,
+- collectible behavior,
+- timed effect state.
+
+Do not create them until a real feature requires them.
+
+---
+
+## 5. Parent coordinates, children report
+
+Default communication direction:
+
+### Parent -> child
+
+Use a direct typed method call for commands.
+
+Example:
+
+```gdscript
+player.move_to_lane(target_lane)
+```
+
+### Child -> owner/parent
+
+Use signals to report events.
+
+Example:
+
+```gdscript
+signal lane_changed(lane_index: int)
+signal collected(value: int)
+signal crashed
+```
+
+### Siblings
+
+Siblings should not search for each other using relative paths.
+
+Their common owner coordinates them or injects the required reference.
+
+---
+
+## 6. Data belongs in Resources when appropriate
+
+Use custom `Resource` types for reusable serialized configuration once a real system needs them.
+
+Possible future data:
+
+```text
+ship_data.gd
+hazard_data.gd
+hazard_pattern_data.gd
+sector_data.gd
+contract_data.gd
+upgrade_data.gd
 ```
 
 Possible values:
 
-- speed
-- max health
-- fire rate
-- projectile speed
-- damage
-- score value
-- spawn configuration
+- lane-change duration,
+- reward multipliers,
+- spawn parameters,
+- hazard speed,
+- telegraph duration,
+- sector tuning,
+- contract targets,
+- power-up duration.
 
-Do not use Nodes just to hold data.
+Do not use Nodes merely to hold data.
 
-## 3. Recommended repository structure
+Do not create Resources before there is meaningful reusable data.
 
-The repository currently keeps scenes and scripts in separate top-level folders. To remain maintainable, mirror the same gameplay domains in both folders.
+---
+
+## 7. Recommended repository direction
+
+Create domain folders only when the first real file for the domain exists.
 
 ```text
 res://
@@ -136,30 +169,37 @@ res://
 ├── scenes/
 │   ├── main.tscn
 │   ├── player/
-│   ├── enemies/
-│   ├── projectiles/
+│   ├── hazards/
+│   ├── collectibles/
+│   ├── power_ups/
+│   ├── routes/
 │   ├── effects/
 │   └── ui/
 │
 ├── scripts/
 │   ├── core/
 │   ├── player/
-│   ├── enemies/
-│   ├── projectiles/
+│   ├── hazards/
+│   ├── collectibles/
+│   ├── power_ups/
+│   ├── routes/
 │   ├── components/
 │   ├── systems/
 │   └── ui/
 │
 ├── resources/
 │   ├── ships/
-│   ├── weapons/
-│   ├── enemies/
-│   └── waves/
+│   ├── hazards/
+│   ├── patterns/
+│   ├── sectors/
+│   ├── contracts/
+│   └── progression/
 │
 ├── assets/
-│   ├── player/
-│   ├── enemies/
-│   ├── projectiles/
+│   ├── ships/
+│   ├── hazards/
+│   ├── collectibles/
+│   ├── power_ups/
 │   ├── effects/
 │   ├── ui/
 │   ├── audio/
@@ -172,341 +212,426 @@ res://
     └── .gdignore
 ```
 
-Do not create every directory immediately. Add a directory when the first real file for that domain exists.
+This is a destination map, not scaffolding work.
 
-## 4. Main scene responsibility
+---
 
-The main scene is the composition root for one gameplay run.
+## 8. Main gameplay scene responsibility
 
-Recommended shape when gameplay begins:
+`Main` is the composition root for one active run.
+
+A likely future tree may evolve toward:
 
 ```text
 Main (Node2D)
-├── Background (Node2D or Parallax2D)
+├── Background
 ├── World (Node2D)
-│   ├── PlayerSpawn (Marker2D)
-│   ├── Enemies (Node2D)
-│   ├── Projectiles (Node2D)
+│   ├── Lanes (Node2D)
+│   ├── Player
+│   ├── Hazards (Node2D)
+│   ├── Collectibles (Node2D)
+│   ├── GameplayTriggers (Node2D)
 │   └── Effects (Node2D)
 ├── Camera2D
 └── HudLayer (CanvasLayer)
     └── Hud (Control)
 ```
 
-The exact tree should only be created when those systems are implemented.
+Do not create nodes just because they appear in this example.
 
-### Main should own
+### Main may coordinate
 
-- high-level game flow for the current run,
-- spawning scene instances,
-- connecting high-level signals,
-- coordinating score, wave progression, and game-over flow,
-- references to top-level containers.
+- current-run lifecycle,
+- high-level spawn ownership,
+- distance/run progression,
+- high-level event connections,
+- current sector/Threat coordination when those systems exist,
+- high-level HUD state flow.
 
-### Main should not own
+### Main should not contain
 
-- player movement code,
-- enemy movement code,
-- projectile collision details,
-- animation internals,
-- weapon internals,
-- individual health logic.
+- lane movement internals,
+- hazard-specific behavior,
+- Star Core animation internals,
+- power-up implementation internals,
+- UI layout internals.
 
-## 5. Scene boundaries
+If Main becomes a large monolithic controller, split by real responsibilities.
 
-Create a separate scene when an object:
+---
 
-- is instantiated more than once,
-- has its own lifecycle,
-- has several child nodes,
-- needs isolated testing,
-- represents a clear game concept,
-- is likely to be reused.
+## 9. Player architecture
 
-Examples that deserve scenes:
+The courier ship is a deterministic three-lane controller.
 
-- player ship,
-- enemy type,
-- projectile type,
-- explosion,
-- HUD,
-- pause menu.
-
-Do not create a scene for a trivial value or tiny helper that has no node behavior.
-
-## 6. Script boundaries
-
-Attach a script when a node needs behavior or state that the built-in node does not already provide.
-
-Do not attach scripts merely to rename concepts.
-
-A script should generally have one clear responsibility.
-
-Good examples:
+Default root:
 
 ```text
-player.gd             -> player-specific orchestration
-player_movement.gd    -> movement behavior if it becomes reusable/complex
-health.gd             -> reusable health component
-projectile.gd         -> projectile movement/lifetime/hit handling
-wave_spawner.gd       -> wave spawning rules
-hud.gd                -> HUD presentation updates
+Player (CharacterBody2D)
+├── Sprite2D / AnimatedSprite2D
+├── CollisionShape2D
+└── optional owned children required by implemented features
 ```
 
-Avoid generic files such as:
+The gameplay state should preserve a discrete lane index:
 
 ```text
-manager.gd
-utils.gd
-helpers.gd
-game_system.gd
+0 = left
+1 = center
+2 = right
 ```
 
-unless the responsibility is precisely defined.
+Visual/physical movement between lane centers may interpolate smoothly, but game logic must still have a clear destination/current lane.
 
-## 7. Typed GDScript standard
+Do not implement free analog flight unless the game design changes.
 
-Use static typing throughout gameplay code.
+Do not add weapon origins or firing behavior by default.
 
-Preferred:
+---
 
-```gdscript
-extends CharacterBody2D
+## 10. Hazard architecture
 
-@export var move_speed: float = 320.0
-
-func _physics_process(delta: float) -> void:
-    var direction: Vector2 = Input.get_vector(
-        "move_left",
-        "move_right",
-        "move_up",
-        "move_down"
-    )
-    velocity = direction * move_speed
-    move_and_slide()
-```
-
-Avoid untyped declarations when the type is known.
-
-Preferred naming:
-
-- files/folders: `snake_case`
-- variables/functions/signals/groups: `snake_case`
-- node names/classes: `PascalCase`
-- constants: `UPPER_SNAKE_CASE`
-
-## 8. Process callbacks
-
-### `_physics_process(delta)`
-
-Use for:
-
-- movement involving physics bodies,
-- collision-driven movement,
-- deterministic gameplay physics updates.
-
-Player and enemy `CharacterBody2D` movement belongs here.
-
-### `_process(delta)`
-
-Use for frame-dependent visual or non-physics logic when necessary.
+Choose the hazard root by behavior, not by visual appearance.
 
 Examples:
 
-- purely visual interpolation,
-- UI animation logic not handled by AnimationPlayer/Tween.
+### Overlap-only deterministic hazard
 
-Do not put every script into both callbacks automatically.
+Use `Area2D` when the object needs hit/overlap detection but not solid collision response.
 
-## 9. Signals
+### Physics-driven debris
 
-Signals are the main decoupling tool for gameplay events.
+Use `RigidBody2D` when forces, angular velocity, bounce, and physics simulation are intentionally part of the behavior.
 
-Use event-style, past-tense names where practical:
+### Fixed solid obstacle
 
-```gdscript
-signal health_changed(current: float, maximum: float)
-signal died
-signal projectile_fired(projectile: Node2D)
-signal score_awarded(points: int)
-```
+Use `StaticBody2D`.
 
-Good uses:
+### Code-controlled solid moving obstacle
 
-- player died,
-- enemy destroyed,
-- health changed,
-- projectile hit something,
-- wave completed,
-- score changed.
+Use `CharacterBody2D` only if deterministic collision response is actually needed.
 
-Do not use signals simply to replace a straightforward parent-to-child method call.
+Do not choose `RigidBody2D` merely because something looks like an asteroid.
 
-## 10. Groups
+---
 
-Groups are useful when many unrelated scene instances share a category or need a broadcast operation.
+## 11. Collectible and power-up architecture
 
-Possible groups:
+Star Cores and ordinary power-up pickups are usually detection objects, so `Area2D` is the default.
+
+Example:
 
 ```text
-player
-enemies
-projectiles
- damageable
+StarCore (Area2D)
+├── Sprite2D / AnimatedSprite2D
+└── CollisionShape2D
 ```
 
-Use `snake_case` group names.
+A pickup should report collection through a signal or controlled interaction and should not directly modify arbitrary HUD nodes.
 
-Do not use groups as a replacement for ownership or clear references when only one known node is involved.
+The run owner/system decides how collection affects score, combo, mission progress, or persistent rewards.
 
-## 11. Autoload policy
+---
 
-Autoloads are global state and must be rare.
+## 12. Near-Miss architecture
 
-Before adding an Autoload, ask:
+Near Miss is a gameplay detection concept, not physical collision.
 
-1. Must this object exist before and after gameplay scene changes?
-2. Is its responsibility truly global?
-3. Can a regular scene node, Resource, signal, static function, or injected reference solve the problem more locally?
+A likely implementation may use a separate `Area2D` region around a hazard/player, but the exact ownership should be chosen when the system is implemented.
 
-Reasonable future Autoload candidates may include:
+Requirements when implemented:
 
-- persistent save/profile state,
-- scene transition coordination,
-- project-wide settings that must survive scene replacement.
+- distinguish a true collision from a near miss,
+- avoid duplicate rewards for one pass,
+- preserve deterministic scoring,
+- support multiple hazard shapes where practical.
 
-Do not create these by default:
+Do not implement this component until Near Miss is the active milestone.
 
-```text
-GameManager
-EnemyManager
-PlayerManager
-AudioManager
-UIManager
-```
+---
 
-A local scene-owned node is preferred until global lifetime is demonstrably required.
+## 13. Route and extraction architecture
 
-## 12. Data flow example
+Route gates and extraction choices are world-space gameplay interactions.
 
-A later enemy-destruction flow should look roughly like this:
+They will likely combine:
 
-```text
-Projectile detects hit
-    -> Enemy/Health receives damage
-        -> Health emits died
-            -> Enemy emits destroyed(score_value)
-                -> Main receives destroyed
-                    -> Main updates run score
-                    -> Main tells HUD to display the new score
-```
+- world-space presentation,
+- lane occupancy,
+- trigger detection,
+- high-level run-state decisions.
 
-The projectile does not directly find the HUD or score system.
+Use `Area2D` for overlap/trigger detection where appropriate.
 
-## 13. Dependency rules
+Do not implement route choice as unrelated screen buttons; the game concept requires selecting a route by moving into the corresponding lane.
 
-Allowed dependency direction:
+---
 
-```text
-Main / high-level scene
-    -> instantiated gameplay scenes
-        -> owned child nodes/components
-            -> Resources/data
-```
+## 14. UI architecture
 
-Events may travel upward using signals.
+World gameplay and screen UI must remain separate.
 
-Avoid:
-
-- child searching for Main,
-- enemy searching for HUD,
-- projectile searching for global score state,
-- arbitrary sibling node paths,
-- globally accessible mutable state for local gameplay concerns.
-
-## 14. Performance rules
-
-Do not optimize before measurement, but avoid obvious structural waste.
-
-- Prefer `Resource`/`RefCounted` for pure data instead of Nodes.
-- Disable processing when an object does not need per-frame callbacks.
-- Do not create one global `_process()` manager for every entity just because it seems architectural.
-- Use scene instances for normal gameplay objects.
-- Consider pooling only after profiling shows spawn/free churn is a real problem.
-- Keep collision layers and masks intentional.
-
-## 15. Collision architecture
-
-Define layers by gameplay responsibility, not arbitrary numbers.
-
-A likely later plan:
-
-```text
-Layer 1: player
-Layer 2: enemies
-Layer 3: player_projectiles
-Layer 4: enemy_projectiles
-Layer 5: world
-Layer 6: pickups
-```
-
-Exact layers should be added to `project.godot` only when the corresponding gameplay system is implemented.
-
-## 16. UI architecture
-
-World gameplay and screen UI should remain separate.
-
-Recommended hierarchy:
+Recommended:
 
 ```text
 HudLayer (CanvasLayer)
 └── Hud (Control)
-    ├── ScoreLabel
-    ├── HealthBar
-    └── ...
+    └── layout containers / labels / indicators
 ```
 
-Use `Control` containers and anchors for layout rather than manually positioning UI with `Node2D`.
+Use `Control` containers and anchors for responsive portrait layout.
 
-Use `CanvasLayer` when UI must stay fixed while `Camera2D` moves the world.
+The gameplay center should remain clear.
 
-## 17. Testing and validation
+HUD presentation listens to run/player events or receives state from a higher-level owner.
 
-Every implementation step should keep the project runnable.
+Gameplay entities must not search for HUD descendants.
 
-Preferred validation after meaningful changes:
+---
+
+## 15. Typed GDScript standard
+
+Use static typing throughout.
+
+Example:
+
+```gdscript
+extends CharacterBody2D
+
+const MIN_LANE: int = 0
+const MAX_LANE: int = 2
+
+var current_lane: int = 1
+
+func request_lane_change(direction: int) -> void:
+    current_lane = clampi(current_lane + direction, MIN_LANE, MAX_LANE)
+```
+
+Exact movement implementation is milestone-specific.
+
+Use:
+
+- files/folders: `snake_case`
+- variables/functions/signals/groups: `snake_case`
+- node/class names: `PascalCase`
+- constants: `UPPER_SNAKE_CASE`
+
+---
+
+## 16. Process callbacks
+
+Use `_physics_process(delta)` for physics-dependent movement/collision logic.
+
+Use `_process(delta)` only for render-frame work that actually needs it.
+
+Prefer built-in tools when appropriate:
+
+- `Timer`,
+- Tween,
+- `AnimationPlayer`,
+- signals.
+
+Do not poll every system every frame unnecessarily.
+
+---
+
+## 17. Signals
+
+Use signals for outward gameplay events.
+
+Examples appropriate to Starfall Courier:
+
+```gdscript
+signal lane_changed(lane_index: int)
+signal crashed
+signal core_collected(value: int)
+signal power_up_collected(power_up_id: StringName)
+signal route_selected(route_id: StringName)
+```
+
+Do not use signals to replace a simple parent-to-child command.
+
+---
+
+## 18. Groups
+
+Groups are useful for broad categories when many unrelated instances share behavior.
+
+Potential examples once needed:
+
+```text
+hazards
+collectibles
+power_ups
+gameplay_triggers
+```
+
+Use groups only when group behavior is actually useful.
+
+Do not use them to replace clear ownership/references for one known node.
+
+---
+
+## 19. Autoload policy
+
+Autoloads are global state and should be rare.
+
+Before adding one:
+
+1. Does it genuinely need to outlive scene replacement?
+2. Is the responsibility project-wide?
+3. Can a scene-owned node, Resource, signal, static helper, or injected reference solve it more locally?
+
+Possible future legitimate candidates may include:
+
+- persistent profile/save state,
+- settings,
+- scene-transition coordination.
+
+Do not automatically create:
+
+```text
+GameManager
+PlayerManager
+HazardManager
+UIManager
+GlobalManager
+```
+
+---
+
+## 20. Collision architecture
+
+Define layers by semantic responsibility.
+
+A possible future mapping:
+
+```text
+Layer 1: player
+Layer 2: hazards
+Layer 3: collectibles
+Layer 4: power_ups
+Layer 5: world
+Layer 6: gameplay_triggers
+```
+
+This is a proposal, not current mandatory configuration.
+
+Add a layer only when the corresponding feature exists.
+
+Configure masks deliberately.
+
+---
+
+## 21. Fair procedural-generation architecture
+
+The concept requires every hazard pattern to have at least one survivable route.
+
+When procedural patterns are implemented:
+
+- prefer authored/validated pattern data over unconstrained randomness,
+- represent lane occupancy clearly,
+- validate that at least one safe route exists,
+- keep telegraph/reaction windows readable,
+- separate difficulty tuning from raw random spawning.
+
+Fairness is part of system correctness.
+
+A generator that can produce impossible states is a gameplay bug.
+
+---
+
+## 22. Run-state ownership
+
+Run-specific values may eventually include:
+
+- distance,
+- score,
+- combo,
+- Threat,
+- active sector,
+- active power-ups,
+- contract state.
+
+Do not immediately place them in an Autoload.
+
+Prefer ownership by the active run scene/controller until cross-scene persistence is actually required.
+
+Persistent career values such as Star Chips, reputation, ship mastery, upgrades, and lifetime statistics belong to a separate persistence design later.
+
+---
+
+## 23. Dependency direction
+
+Preferred direction:
+
+```text
+Main / run composition
+    -> gameplay scenes
+        -> owned child behavior
+            -> Resources/data
+```
+
+Events travel upward using signals.
+
+Avoid:
+
+- player searching for Main,
+- hazard searching for HUD,
+- collectible directly changing persistent global currency,
+- arbitrary sibling NodePaths,
+- global mutable state for local run concerns.
+
+---
+
+## 24. Performance
+
+Do not optimize before measurement, but avoid obvious waste.
+
+- Use Nodes for active scene behavior.
+- Use Resources/RefCounted objects for data/helper responsibilities.
+- Disable processing when unnecessary.
+- Prefer scene instances for normal gameplay objects.
+- Consider pooling only after profiling proves spawn/free churn matters.
+- Keep collision masks narrow and intentional.
+- Avoid effects that compromise mobile readability/performance.
+
+---
+
+## 25. Validation
+
+After meaningful changes, validate with Godot 4.7 when available:
 
 ```bash
 godot --headless --path . --editor --quit
 ```
 
-For a quick project run where the scene exits on its own or a dedicated test harness exists, use a headless run as appropriate.
+Also check:
 
-Also validate:
+- parser errors,
+- missing resources,
+- invalid NodePaths,
+- input actions,
+- collision configuration,
+- main scene load,
+- reusable scene independence where relevant.
 
-- no parser errors,
-- no missing resources,
-- no invalid NodePaths,
-- main scene can load,
-- typed GDScript warnings/errors are addressed,
-- scenes can be run independently when designed to be reusable.
+Never claim runtime/headless validation succeeded if Godot was not executed.
 
-## 18. Development sequence
+---
 
-Do not scaffold the entire final game up front.
+## 26. Development sequence rule
 
-Recommended incremental order:
+Do not infer a full implementation roadmap from this architecture document.
 
-1. project bootstrap,
-2. player scene and movement,
-3. shooting/projectile scene,
-4. first enemy scene,
-5. damage and death,
-6. spawning/waves,
-7. HUD and score,
-8. game state/game-over,
-9. effects/audio,
-10. data/resources and balancing,
-11. persistence/settings only when required.
+The user chooses the next milestone.
 
-Each stage should introduce only the architecture needed for that stage.
+At every stage:
+
+1. read `docs/game_design/game_concept_v0.md`,
+2. inspect the current project,
+3. implement the smallest coherent requested feature,
+4. validate,
+5. stop.
+
+The full game concept describes destination, not permission to prebuild future systems.
