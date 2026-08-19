@@ -41,24 +41,37 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          godot --headless --path . --editor --quit --verbose 2>&1 | tee godot-import.log
+          godot --headless --path . --editor --quit 2>&1 | tee godot-import.log
+          if grep -E 'SCRIPT ERROR:|SHADER ERROR:|^ERROR:' godot-import.log; then
+            echo "Godot reported import/parse errors." >&2
+            exit 1
+          fi
 
-      - name: Load required scenes and shaders
+      - name: Load required scenes, scripts, and shaders
         shell: bash
         run: |
           set -euo pipefail
           godot --headless --path . --script res://dev/ci/validate_resources.gd 2>&1 | tee godot-resources.log
+          if grep -E 'SCRIPT ERROR:|SHADER ERROR:|^ERROR:' godot-resources.log; then
+            echo "Godot reported resource-load errors." >&2
+            exit 1
+          fi
 
       - name: Smoke-test main scene
         shell: bash
         run: |
           set -euo pipefail
           godot --headless --path . --quit-after 2 2>&1 | tee godot-main.log
+          if grep -E 'SCRIPT ERROR:|SHADER ERROR:|^ERROR:' godot-main.log; then
+            echo "Godot reported main-scene errors." >&2
+            exit 1
+          fi
 
       - name: Smoke-test visual lab pages
         shell: bash
         run: |
           set -euo pipefail
+          : > godot-scenes.log
           scenes=(
             res://dev/visual_lab/visual_lab.tscn
             res://dev/visual_lab/pages/backgrounds.tscn
@@ -69,9 +82,13 @@ jobs:
             res://dev/visual_lab/pages/ui.tscn
           )
           for scene in "${scenes[@]}"; do
-            echo "=== $scene ==="
+            echo "=== $scene ===" | tee -a godot-scenes.log
             godot --headless --path . --quit-after 2 "$scene" 2>&1 | tee -a godot-scenes.log
           done
+          if grep -E 'SCRIPT ERROR:|SHADER ERROR:|^ERROR:' godot-scenes.log; then
+            echo "Godot reported visual-lab runtime errors." >&2
+            exit 1
+          fi
 
       - name: Upload validation logs
         if: always()

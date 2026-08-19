@@ -115,10 +115,11 @@ func _draw_near_miss(streak: bool) -> void:
 	accent.a = fade * 0.82
 	var spread := 12.0 + phase * 28.0
 	for side in [-1.0, 1.0]:
+		var side_value: float = float(side)
 		for index in range(3 if not streak else 5):
 			var y := -16.0 + float(index) * 8.0
-			var x := side * (18.0 + float(index) * 2.0)
-			draw_line(Vector2(x,y), Vector2(x + side * spread,y - 8.0), accent, 2.0, true)
+			var x: float = side_value * (18.0 + float(index) * 2.0)
+			draw_line(Vector2(x,y), Vector2(x + side_value * spread,y - 8.0), accent, 2.0, true)
 	if streak:
 		draw_arc(Vector2.ZERO, 37.0 + phase * 9.0, -2.8, 2.8, 34, StarfallVisualTokens.alpha(&"magenta_bright", fade * 0.46), 2.0, true)
 
