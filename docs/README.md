@@ -10,96 +10,120 @@ For AI agents and developers:
 
 1. The user's current explicit task defines the current implementation scope.
 2. `game_design/game_concept_v0.md` defines the canonical game identity and full design direction.
-3. `visual_design/visual_system_v0.md` defines the canonical visual style, colors, sizes, variants, motion/VFX language, typography, iconography, shaders, and UI system.
-4. `visual_design/final_visual_inventory_v0.md` maps the final visual families to production code, required variants/states, QA requirements, and visual-lab coverage.
-5. `godot_architecture.md` defines how the project should be structured in Godot.
-6. `node_selection_guide.md` defines how to choose Godot nodes for requirements.
-7. `instructions/godot_ai_instructions.md` defines general coding-agent rules.
-8. `instructions/visual_ai_instructions.md` adds rules for visual/UI/VFX/shader tasks.
-9. Existing project code/scenes define local implementation conventions.
+3. `visual_design/visual_system_v0.md` defines semantic colors, sizing, typography/iconography, procedural rendering direction, and the base visual system.
+4. `visual_design/asset_drawing_system_v1.md` defines the canonical senior production drawing language and polish standard.
+5. `visual_design/final_visual_inventory_v1.md` defines the canonical final visual inventory, variants, states, animation requirements, ownership, and QA coverage.
+6. `godot_architecture.md` defines how the project should be structured in Godot.
+7. `node_selection_guide.md` defines how to choose Godot nodes for requirements.
+8. `instructions/godot_ai_instructions.md` defines general coding-agent rules.
+9. `instructions/visual_ai_instructions.md` adds rules for visual/UI/VFX/shader tasks.
+10. Existing project code/scenes define established local implementation conventions.
 
-## Documents
+The historical `visual_design/final_visual_inventory_v0.md` may be used for implementation-history context, but new visual production work follows v1.
+
+---
+
+## Game design
 
 ### `game_design/game_concept_v0.md`
 
-Canonical **Starfall Courier v0 design bible**.
+Canonical Starfall Courier design bible covering:
 
-Covers:
-
-- product identity,
-- three-lane gameplay,
+- portrait three-lane courier survival,
 - run loop,
 - Star Cores,
-- combo,
-- Near Misses,
+- combo and Near Misses,
 - power-ups,
 - hazards,
 - sectors,
 - route choices,
 - contracts/extraction,
 - Threat,
-- elite events,
 - progression,
 - ships/mastery,
 - missions/achievements/statistics,
 - game modes,
-- visual/UI/audio direction,
-- AI implementation guardrails,
-- core-vs-future scope.
+- product guardrails.
+
+Strongest invariant:
+
+> Add depth around the original gameplay — never replace the original gameplay.
+
+The player is a courier, not a soldier. Do not infer shooting mechanics from the legacy repository name.
+
+---
+
+## Visual design
+
+See:
+
+```text
+visual_design/README.md
+```
 
 ### `visual_design/visual_system_v0.md`
 
-Canonical **Starfall Courier procedural visual system and final-product asset catalog**.
+Defines the visual semantics:
 
-Covers:
+- procedural/vector/canvas-first rendering,
+- 720 × 1280 portrait reference,
+- semantic palette,
+- base object sizes,
+- five sector packages,
+- ship/power-up/hazard/route visual language,
+- Oxanium text family,
+- Material Symbols Sharp icon family,
+- base UI/VFX/shader system.
 
-- premium neon deep-space courier identity,
-- procedural/vector-first rendering policy,
-- 720 × 1280 reference sizing,
-- semantic color tokens,
-- geometry/stroke/glow language,
-- layered backgrounds and five sector packages,
-- navigation/lane/route/extraction visuals,
-- ship families/states,
-- Star Cores/Star Chips,
-- power-ups,
-- hazard variants,
-- animation/VFX language,
-- shader catalog,
-- Oxanium Variable typography,
-- Material Symbols Sharp Variable icon font,
-- UI component/screen inventory,
-- motion/accessibility/performance guidance.
+### `visual_design/asset_drawing_system_v1.md`
 
-For any visual implementation, read this document before inventing colors, sizes, art assets, fonts, icons, effects, or animation styles.
+Defines **how production art must be drawn**:
 
-### `visual_design/final_visual_inventory_v0.md`
+- silhouette hierarchy,
+- structural planes,
+- material separation,
+- functional details,
+- controlled energy/glow,
+- detail-density budgets,
+- sector depth construction,
+- richer ship anatomy,
+- collectible/power-up structure,
+- hazard detailing,
+- route/extraction/Hunter treatment,
+- VFX timing/motion grammar,
+- UI construction,
+- shader discipline,
+- senior polish and anti-patterns.
 
-Canonical **implementation manifest for the final production visual inventory**.
+### `visual_design/final_visual_inventory_v1.md`
 
-It maps:
+Defines **what final visual coverage must exist**:
 
-- production visual classes,
-- shader ownership,
-- every visual family,
-- ship/object/hazard/power-up variants,
-- required visual states,
-- VFX coverage,
-- font/icon dependencies,
-- visual QA checks,
-- known gaps,
-- the exact dev scene used to inspect each family.
+- production quality tiers,
+- asset families,
+- target sizes,
+- minimum variant counts,
+- required states,
+- animation requirements,
+- production ownership,
+- visual-lab review requirements,
+- technical/art QA gates,
+- explicit exclusions under the current game concept.
+
+---
+
+## Godot architecture
 
 ### `godot_architecture.md`
 
-Godot 4.7 architecture rules tailored to Starfall Courier:
+Defines:
 
 - scene composition,
-- scene ownership,
+- ownership,
 - communication,
 - Resources,
 - run-state ownership,
-- fair procedural-generation requirements,
+- fair procedural-generation rules,
 - folder direction,
 - validation.
 
@@ -117,34 +141,36 @@ Behavior-first node selection for:
 - HUD,
 - data/configuration.
 
+---
+
 ## Production visual implementation
 
-Reusable production visual code:
+Reusable visual code:
 
 ```text
 res://scripts/visuals/
 ```
 
-Shared visual shaders:
+Shared shaders:
 
 ```text
 res://shaders/visual/
 ```
 
-The procedural implementation currently includes:
+Current procedural implementation includes:
 
 - semantic visual tokens,
-- canonical font registry,
-- procedural UI theme factory,
-- five sector backgrounds,
-- seven ship silhouette slots,
-- player visual states,
-- collectibles,
-- core and future power-up visual slots,
-- every documented hazard family,
-- route/extraction/Hunter visuals,
-- complete procedural VFX inventory,
-- reusable background/energy/time-warp/sector/UI shaders.
+- font registry,
+- UI theme factory,
+- sector backgrounds,
+- ship family renderer,
+- collectible/power-up/hazard/route renderer,
+- effect renderer,
+- shared background/energy/time-warp/sector/UI shaders.
+
+The current implementation is a baseline. v1 docs intentionally set a higher quality target than the first visual-lab pass.
+
+---
 
 ## Development visual lab
 
@@ -167,14 +193,17 @@ res://dev/visual_lab/pages/ui.tscn
 
 The lab is development-only and must never become a production gameplay dependency.
 
+The v1 quality target expects the lab to evolve toward side-by-side gameplay-scale, enlarged-detail, state, silhouette, and cross-background comparisons.
+
+---
+
 ## Project baseline
 
-- Engine: Godot 4.7
+- Engine: Godot 4.7 / CI pinned to Godot 4.7.1
 - Language: statically typed GDScript
-- Canonical game: **Starfall Courier**
-- Reference viewport: **720 × 1280 portrait**
+- Canonical game: Starfall Courier
+- Reference viewport: 720 × 1280 portrait
 - Genre: portrait-mode sci-fi arcade survival / three-lane courier runner
-- Core control: tap left/right to move between three lanes
 - Player identity: courier, not soldier
 - Combat: not a core mechanic
 - Visual pipeline: procedural/vector/canvas first
@@ -185,18 +214,24 @@ The lab is development-only and must never become a production gameplay dependen
 - Data: Resources when reusable serialized configuration is justified
 - Globals: avoid by default
 
-## Current validation status
+---
 
-The repository contains the visual test harness, but headless/runtime validation must still be run on a machine with the Godot 4.7 executable:
+## Validation
+
+GitHub Actions installs official Godot 4.7.1 and validates project import, required scripts/scenes/shaders, the main scene, and visual-lab pages.
+
+Local validation when Godot is installed:
 
 ```bash
 godot --headless --path . --editor --quit
 ```
 
-The UI lab intentionally reports the canonical font binaries as missing until those files exist at their documented paths.
+After visual changes, also inspect the relevant visual-lab scene in the Godot editor at real gameplay scale.
 
-## Strongest design constraint
+---
 
-> **Add depth around the original gameplay — never replace the original gameplay.**
+## Visual production principle
 
-The repository name `space-shooter` is legacy/contextual and must not be used as justification to introduce shooting mechanics.
+> More detail is not the target. Better-designed detail is the target.
+
+Improve assets through silhouette, structure, material hierarchy, functional accents, controlled energy, and deliberate motion before adding micro-detail.
