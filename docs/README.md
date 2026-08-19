@@ -10,9 +10,10 @@ For AI agents and developers:
 
 1. The user's current explicit task defines the current implementation scope.
 2. `game_design/game_concept_v0.md` defines the canonical game identity and full design direction.
-3. `godot_architecture.md` defines how the project should be structured in Godot.
-4. `node_selection_guide.md` defines how to choose Godot nodes for requirements.
-5. Existing project code/scenes define local implementation conventions.
+3. `visual_design/visual_system_v0.md` defines the canonical visual style, procedural asset catalog, colors, sizes, variants, animation/VFX language, typography, iconography, shaders, and UI system.
+4. `godot_architecture.md` defines how the project should be structured in Godot.
+5. `node_selection_guide.md` defines how to choose Godot nodes for requirements.
+6. Existing project code/scenes define local implementation conventions.
 
 ## Documents
 
@@ -42,6 +43,38 @@ Covers:
 - visual/UI/audio direction,
 - AI implementation guardrails,
 - core-vs-future scope.
+
+### `visual_design/visual_system_v0.md`
+
+Canonical **Starfall Courier procedural visual system and final-product asset catalog**.
+
+Covers:
+
+- premium neon deep-space courier visual identity,
+- procedural/vector-first rendering policy,
+- 720 × 1280 reference sizing,
+- canonical semantic color tokens,
+- geometry/stroke/glow language,
+- layered backgrounds and five sector visual packages,
+- navigation/lane/route/extraction visuals,
+- player ship visual families and states,
+- Star Cores/Star Chips,
+- power-ups,
+- every hazard family and required variants,
+- elite-event visuals,
+- spawn/despawn/crash/destruction animations,
+- gameplay VFX catalog,
+- shader catalog,
+- Oxanium Variable typography system,
+- Material Symbols Sharp Variable icon-font system,
+- complete UI component and screen inventory,
+- motion timing/easing,
+- accessibility/readability rules,
+- performance guardrails,
+- future visual file organization,
+- AI visual-asset checklist.
+
+For any visual implementation, read this document before inventing colors, sizes, art assets, fonts, icons, effects, or animation styles.
 
 ### `godot_architecture.md`
 
@@ -79,6 +112,9 @@ Behavior-first node selection for:
 - Core control: tap left/right to move between three lanes
 - Player identity: courier, not soldier
 - Combat: not a core mechanic
+- Visual pipeline: procedural/vector/canvas first; raster sprite sheets are not the default
+- Text family: Oxanium Variable
+- UI icon family: Material Symbols Sharp Variable
 - Architecture: scene composition with small self-contained scenes
 - Communication: typed calls downward, signals outward/upward
 - Data: Resources when reusable serialized configuration is justified
