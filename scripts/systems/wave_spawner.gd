@@ -5,6 +5,15 @@ signal player_hit
 signal core_collected(value: int)
 signal wave_spawned(pattern_id: StringName)
 
+const DEFAULT_PATTERN_PATHS: PackedStringArray = [
+	"res://resources/patterns/phase2/wave_left_blocked.tres",
+	"res://resources/patterns/phase2/wave_right_blocked.tres",
+	"res://resources/patterns/phase2/wave_center_blocked.tres",
+	"res://resources/patterns/phase2/wave_left_center_blocked.tres",
+	"res://resources/patterns/phase2/wave_center_right_blocked.tres",
+	"res://resources/patterns/phase2/wave_left_right_blocked.tres",
+]
+
 @export var patterns: Array[StarfallLaneWavePattern] = []
 @export var asteroid_scene: PackedScene
 @export var star_core_scene: PackedScene
@@ -28,6 +37,8 @@ var _running: bool = false
 
 func _ready() -> void:
 	_wave_timer.timeout.connect(_on_wave_timer_timeout)
+	if patterns.is_empty():
+		_load_default_patterns()
 
 func configure(hazards_root: Node2D, collectibles_root: Node2D) -> void:
 	_hazards_root = hazards_root
@@ -39,6 +50,9 @@ func start_run() -> void:
 		return
 	if asteroid_scene == null or star_core_scene == null:
 		push_error("WaveSpawner requires asteroid_scene and star_core_scene.")
+		return
+	if patterns.is_empty():
+		push_error("WaveSpawner requires at least one valid lane pattern.")
 		return
 	_distance_m = 0.0
 	_pattern_cursor = 0
@@ -65,6 +79,15 @@ func _difficulty_ratio() -> float:
 	if distance_for_maximum_speed_m <= 0.0:
 		return 1.0
 	return clampf(_distance_m / distance_for_maximum_speed_m, 0.0, 1.0)
+
+func _load_default_patterns() -> void:
+	for path: String in DEFAULT_PATTERN_PATHS:
+		var resource: Resource = load(path)
+		var pattern: StarfallLaneWavePattern = resource as StarfallLaneWavePattern
+		if pattern == null:
+			push_error("Failed to load Phase 2 wave pattern: %s" % path)
+			continue
+		patterns.append(pattern)
 
 func _on_wave_timer_timeout() -> void:
 	if not _running:
