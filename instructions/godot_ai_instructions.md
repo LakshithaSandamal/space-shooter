@@ -1,462 +1,530 @@
-# AI Instructions — Godot 4.7 Space Shooter
+# AI Instructions — Godot 4.7 Starfall Courier
 
 These instructions define how an AI coding agent must work inside this repository.
 
 ## 1. Project identity
 
+- Canonical game: **Starfall Courier**
 - Engine: Godot 4.7
-- Language: GDScript
-- Game type: 2D space shooter
+- Language: statically typed GDScript
+- Presentation: portrait-mode 2D mobile
+- Genre: sci-fi arcade survival / three-lane courier runner
 - Main project file: `project.godot`
 - Current main scene: `res://scenes/main.tscn`
+- Game-design source of truth: `docs/game_design/game_concept_v0.md`
 - Architecture reference: `docs/godot_architecture.md`
 - Node-selection reference: `docs/node_selection_guide.md`
 
-Do not assume APIs from older Godot versions or unstable future documentation.
+The repository is named `space-shooter`, but **Starfall Courier is not a combat-focused shooter**.
 
-## 2. Read before editing
+The player is a courier, not a soldier.
 
-Before making a meaningful change:
+The core play is:
+
+```text
+three-lane movement
++ dodging
++ Star Core collection
++ combo / Near-Miss mastery
++ power-ups
++ route risk/reward
++ contracts
++ survival progression
+```
+
+Do not add player shooting, guns, ammo, aiming, free-flight movement, or combat progression unless the user explicitly changes the game design.
+
+## 2. Source-of-truth precedence
+
+Before making design or implementation decisions, use this order:
+
+1. The user's current explicit request defines the current implementation scope.
+2. `docs/game_design/game_concept_v0.md` defines game identity and intended systems.
+3. `docs/godot_architecture.md` defines project architecture.
+4. `docs/node_selection_guide.md` defines Godot node-selection guidance.
+5. Existing code/scenes define established local conventions.
+
+If an old example conflicts with the canonical game concept, preserve the game concept.
+
+Do not treat the full concept document as a request to implement every feature.
+
+## 3. Read before editing
+
+Before a meaningful change:
 
 1. Inspect `project.godot`.
-2. Inspect the scene(s) affected by the task.
-3. Inspect the script(s) already attached to those scenes.
-4. Read the relevant architecture section in `docs/`.
-5. Reuse existing conventions instead of inventing a parallel pattern.
-6. Identify the smallest set of files that must change.
+2. Read the relevant section of `docs/game_design/game_concept_v0.md`.
+3. Inspect every scene affected by the task.
+4. Inspect scripts already attached to those scenes.
+5. Read relevant architecture/node guidance.
+6. Identify the smallest coherent set of files that must change.
+7. Reuse existing conventions rather than creating a parallel architecture.
 
-Never rewrite unrelated files just because a cleaner architecture is imaginable.
+Never rewrite unrelated files merely because another architecture is imaginable.
 
-## 3. Incremental development rule
+## 4. Incremental development rule
 
-Build one real requirement at a time.
+Build **one real requested milestone at a time**.
 
-Do not scaffold future systems before they are needed.
+Do not scaffold future systems simply because they exist in the full design.
 
-For example, when implementing player movement, do not also create:
+For example, while implementing three-lane player movement, do not also create:
 
-- enemy managers,
-- inventory systems,
-- save systems,
-- wave data,
-- generic service locators,
-- unnecessary Autoloads.
+- contracts,
+- progression,
+- achievements,
+- sectors,
+- route choice,
+- save/profile state,
+- power-up frameworks,
+- generic managers,
+- unused data resources.
 
-Every change should leave the project runnable and understandable.
+Every stage must leave the project understandable and runnable.
 
-## 4. Node-selection rules
+## 5. Core gameplay guardrails
 
-Choose the root node by what the object fundamentally does.
+The following rules are product constraints, not optional style preferences.
 
-Default choices for this project:
+### Three lanes
 
-- Main gameplay composition root -> `Node2D`
-- Player ship -> `CharacterBody2D`
-- AI-controlled enemy ship -> `CharacterBody2D`
-- Simple projectile -> `Area2D`
-- Pickup -> `Area2D`
-- Hitbox/hurtbox -> `Area2D`
-- Detection radius -> `Area2D`
+The default player movement model is discrete:
+
+```text
+LEFT <-> CENTER <-> RIGHT
+```
+
+Input intent:
+
+```text
+tap left half  -> move one lane left
+tap right half -> move one lane right
+```
+
+Do not replace this with analog/free 2D flight unless explicitly requested.
+
+### Continuous travel
+
+The player ship represents continuous forward travel while the world/hazards move toward the player.
+
+### Non-combat identity
+
+Survival comes from navigation and timing.
+
+Future hostile events may attack lanes, but the default response is dodge/escape, not shoot.
+
+### Fairness
+
+Every generated hazard pattern must leave at least one survivable route.
+
+When procedural hazard generation is introduced, solvability is a required invariant.
+
+### Risk/reward
+
+Systems such as Star Cores, Near Misses, route choices, contracts, extraction, and Threat exist to make safety-versus-value decisions meaningful.
+
+Do not flatten these into passive rewards.
+
+## 6. Node-selection rules
+
+Choose a node based on required behavior.
+
+Project-oriented defaults:
+
+- Gameplay composition root -> `Node2D`
+- Player courier ship -> `CharacterBody2D`
+- Simple overlap-only hazard -> `Area2D`
+- Star Core collectible -> `Area2D`
+- Power-up pickup -> `Area2D`
+- Near-Miss detection region -> `Area2D`
+- Route/extraction trigger -> `Area2D`
 - Fixed solid obstacle -> `StaticBody2D`
 - Physics-driven asteroid/debris -> `RigidBody2D`
-- World-space image -> `Sprite2D`
-- Frame animation -> `AnimatedSprite2D`
+- World-space visual -> `Sprite2D`
+- Sprite-frame animation -> `AnimatedSprite2D`
 - Complex property animation -> `AnimationPlayer`
 - Camera -> `Camera2D`
-- Spawn point -> `Marker2D`
-- Screen HUD layer -> `CanvasLayer`
-- UI root/layout -> `Control`
-- Reusable configuration data -> `Resource`
-- Lightweight runtime helper/data -> `RefCounted`
+- Spawn/lane anchor -> `Marker2D`
+- HUD screen layer -> `CanvasLayer`
+- UI/layout -> `Control`
+- Reusable configuration -> `Resource`
+- Lightweight non-Node runtime data/helper -> `RefCounted`
 
-Before choosing a generic `Node` or `Node2D`, check whether Godot already has a specialized node for the required behavior.
+Do not create combat/projectile nodes unless a requested feature actually requires them.
 
-## 5. Scene architecture rules
+Before using generic `Node`/`Node2D`, check whether a specialized node fits the behavior better.
 
-Scenes should be self-contained whenever possible.
+## 7. Scene architecture rules
 
-A reusable scene must not depend on hard-coded paths outside itself.
+Reusable scenes should be self-contained.
 
-Do not write code like:
+Do not couple a scene to hard-coded external tree paths such as:
 
 ```gdscript
 get_node("../../Main/Hud")
 ```
 
-Instead use one of these patterns:
+Prefer:
 
-- exported dependency,
-- parent-injected reference,
-- direct parent-to-child method call,
-- child-to-parent signal,
-- Resource configuration.
+- exported dependencies,
+- parent-injected references,
+- typed direct parent-to-child calls,
+- child-to-owner signals,
+- Resources for reusable data.
 
-A child should not know more about the larger scene tree than necessary.
+A child should know as little as possible about the larger scene tree.
 
-## 6. Communication rules
+## 8. Communication rules
 
-Use this default direction:
+### Parent -> child
 
-### Parent to child
-
-Use a direct typed method call when the parent is commanding behavior.
+Use a typed direct method call for commands.
 
 Example:
 
 ```gdscript
-weapon.fire()
+player.move_to_lane(target_lane)
 ```
 
-### Child to parent or external owner
+### Child -> owner / parent
 
-Use signals when reporting an event that already happened.
+Use a signal to report events.
 
-Example:
+Examples:
 
 ```gdscript
-signal died
-signal hit(target: Node)
-signal score_awarded(points: int)
+signal lane_changed(lane_index: int)
+signal core_collected(value: int)
+signal crashed
 ```
 
 ### Siblings
 
-Do not make siblings search for each other through relative paths.
+Do not make siblings search for one another with relative tree paths.
 
-Let the common parent coordinate them or inject the required reference.
+Let their common owner coordinate them or inject the dependency.
 
-## 7. Composition over inheritance
+## 9. Composition over inheritance
 
-Prefer small scenes and focused behavior components over deep inheritance trees.
+Prefer scene composition and focused behavior components over deep inheritance.
 
-Do not create unnecessary hierarchies such as:
+Do not create speculative inheritance hierarchies.
 
-```text
-BaseEntity
- -> MovingEntity
-   -> CombatEntity
-     -> EnemyCombatEntity
-       -> FastEnemyCombatEntity
-```
+Introduce a shared base class only when real, stable shared behavior already exists.
 
-Only introduce shared base classes when there is real, stable shared behavior.
+## 10. Autoload policy
 
-## 8. Autoload policy
+Autoload is not the default answer for shared functionality.
 
-Autoload is not the default solution for shared functionality.
-
-Do not create global managers automatically.
-
-Avoid speculative classes such as:
+Do not create speculative globals such as:
 
 - `GameManager`
-- `EnemyManager`
 - `PlayerManager`
+- `HazardManager`
 - `UIManager`
-- `AudioManager`
 - `GlobalManager`
 
 Before adding an Autoload, prove that the responsibility:
 
-1. must exist across scene changes,
-2. is truly project-wide,
-3. cannot be handled cleanly by scene ownership, a Resource, a signal, a static helper, or dependency injection.
+1. genuinely requires project-wide lifetime or cross-scene persistence, and
+2. cannot be handled cleanly through scene ownership, Resources, signals, static helpers, or dependency injection.
 
-Reasonable future examples may include persistent settings, save/profile state, or scene-transition coordination.
+Future legitimate candidates may include persistent profile/save state or scene-transition coordination, but only when that requirement exists.
 
-## 9. Resource policy
+## 11. Resource policy
 
-Use `Resource` for reusable game data rather than Nodes.
+Prefer custom `Resource` types for reusable configuration/data when the system justifies them.
 
-Good future examples:
+Future examples may include:
 
-- ship stats,
-- weapon configuration,
-- enemy configuration,
-- wave configuration.
+- ship configuration,
+- hazard configuration,
+- hazard-pattern data,
+- sector configuration,
+- contract configuration,
+- upgrade definitions.
 
-Example pattern:
+Do not create data abstractions before there is real data to configure.
 
-```gdscript
-class_name WeaponData
-extends Resource
+Keep behavior in Nodes/scripts and reusable configuration in Resources when that separation is useful.
 
-@export var damage: float = 10.0
-@export var fire_interval: float = 0.2
-@export var projectile_speed: float = 700.0
-```
-
-Keep behavior in Nodes/scripts and data in Resources when separation is useful.
-
-## 10. GDScript typing rules
+## 12. GDScript typing
 
 Use statically typed GDScript.
-
-Functions must declare return types whenever practical.
 
 Preferred:
 
 ```gdscript
-var speed: float = 320.0
-var target: Node2D
+var current_lane: int = 1
+var lane_change_duration: float = 0.12
 
-func take_damage(amount: float) -> void:
+func move_to_lane(lane_index: int) -> void:
     pass
 
-func get_target_position() -> Vector2:
-    return target.global_position
+func get_lane_position(lane_index: int) -> Vector2:
+    return Vector2.ZERO
 ```
 
-Use type inference only when the resulting type is obvious and stable.
+Functions should declare return types whenever practical.
 
 Avoid vague untyped state when the type is known.
 
-## 11. Naming rules
+## 13. Naming
 
 Use:
 
 - folders: `snake_case`
-- filenames: `snake_case`
-- variables: `snake_case`
-- functions: `snake_case`
-- signals: `snake_case`
-- groups: `snake_case`
-- node names: `PascalCase`
-- class names: `PascalCase`
+- files: `snake_case`
+- variables/functions/signals/groups: `snake_case`
+- node/class names: `PascalCase`
 - constants: `UPPER_SNAKE_CASE`
 
-Keep names domain-specific and descriptive.
+Prefer domain names from the game:
 
-Avoid vague names such as:
+- `star_core`
+- `threat_level`
+- `current_lane`
+- `route_gate`
+- `courier_ship`
 
-- `thing`
-- `data2`
-- `manager`
-- `helper`
-- `stuff`
-- `temp` for permanent code
+Avoid meaningless permanent names such as `thing`, `stuff`, `data2`, or `temp`.
 
-## 12. Script responsibilities
+## 14. Script responsibilities
 
-A script should have one clear responsibility.
+Keep each script focused.
 
-Prefer:
+Likely examples when those features exist:
 
 ```text
-player.gd
-projectile.gd
-health.gd
-weapon.gd
-wave_spawner.gd
+player_ship.gd
+star_core.gd
+hazard.gd
+run_controller.gd
+lane_controller.gd
 hud.gd
 ```
 
-Avoid giant scripts that combine movement, UI, spawning, persistence, audio, and game state.
+Do not create a giant script that combines player movement, spawning, score, UI, persistence, audio, and progression.
 
-Do not split a tiny script into many components unless reuse or complexity justifies it.
+Also do not over-componentize tiny behavior without a reuse/complexity reason.
 
-## 13. Physics rules
+## 15. Physics and movement
 
 ### CharacterBody2D
 
-Use for code-controlled ships requiring collision response.
+Use for the code-controlled courier ship when collision-aware movement is needed.
 
-Movement must normally happen in `_physics_process(delta)`.
+Physics-dependent movement belongs in `_physics_process(delta)`.
 
-Do not manually update `position` as the normal collision-aware movement path.
+Use `velocity` plus `move_and_slide()`/`move_and_collide()` when actual body collision response is part of the design.
 
-Use `velocity` with `move_and_slide()` or `move_and_collide()` as appropriate.
+For lane interpolation, preserve deterministic lane state and do not allow interpolation to create invalid fourth/fractional gameplay lanes.
 
 ### Area2D
 
-Use for detection and overlap without solid collision response.
+Use for overlap/detection behavior such as:
 
-Good uses:
-
-- bullets,
-- hitboxes,
-- hurtboxes,
-- pickups,
-- detection zones.
+- collectibles,
+- simple hazards,
+- Near-Miss zones,
+- route gates,
+- power-up pickups.
 
 ### RigidBody2D
 
-Use when the physics engine should control movement through forces, impulses, mass, and angular velocity.
+Use only when the physics engine should control debris through forces/impulses/mass/angular velocity.
 
-Do not use it for deterministic player movement unless that is an intentional gameplay mechanic.
+Do not use it for deterministic player lane controls.
 
 ### StaticBody2D
 
 Use for fixed solid collision.
 
-## 14. Collision layers and masks
+## 16. Collision layers and masks
 
 Never assign collision layers randomly.
 
-When a new gameplay collision category is introduced:
+When a category becomes real:
 
-1. define its purpose,
+1. define its semantic purpose,
 2. document the layer,
 3. configure both layer and mask intentionally,
-4. avoid broad masks that collide with everything unless required.
+4. avoid broad masks unless required.
 
-A likely future model is:
+A likely future conceptual model is:
 
 ```text
 1 player
-2 enemies
-3 player_projectiles
-4 enemy_projectiles
+2 hazards
+3 collectibles
+4 power_ups
 5 world
-6 pickups
+6 gameplay_triggers
 ```
 
-Do not add these until the corresponding gameplay systems exist.
+This is only a proposed mapping.
 
-## 15. Processing rules
+Do not add unused collision categories before the matching systems exist.
 
-Use `_physics_process(delta)` for physics movement and collision-dependent gameplay.
+## 17. Input rules
 
-Use `_process(delta)` only for work that truly needs a per-render-frame callback.
+Gameplay scripts should use named Input Map actions when actions are appropriate.
 
-Do not leave processing enabled on nodes that do not need it.
-
-Prefer built-in systems such as:
-
-- `Timer`,
-- `AnimationPlayer`,
-- Tweens,
-- signals,
-
-instead of manually polling everything every frame.
-
-## 16. Input rules
-
-Gameplay code should use named Input Map actions, not raw keyboard key codes scattered through scripts.
-
-Preferred conceptual actions:
+For the current game identity, likely actions are:
 
 ```text
 move_left
 move_right
-move_up
-move_down
-fire_primary
 pause
 ```
 
-Only add input actions required by the current implementation.
+Touch input should preserve the conceptual behavior:
 
-## 17. UI rules
+```text
+left side -> move_left
+right side -> move_right
+```
 
-Use `Control`-derived nodes for UI.
+Do not add `fire`, aiming, or vertical free-flight actions unless the design changes.
 
-Use layout containers and anchors instead of treating UI as world-space `Node2D` objects.
+Only add actions required by the current milestone.
 
-Use `CanvasLayer` when HUD elements must remain fixed while `Camera2D` moves the world.
+## 18. UI rules
 
-Gameplay entities should not directly search for or mutate HUD nodes.
+Use `Control`-derived nodes for UI and layout.
 
-Emit gameplay events and let a higher-level owner update presentation.
+Use `CanvasLayer` for fixed gameplay HUD when appropriate.
 
-## 18. Asset rules
+The gameplay center must remain visually clear.
 
-Do not modify source art, audio, fonts, or imported assets unless the task explicitly requires it.
+Game systems should report state/events; they should not search the tree for HUD nodes and directly mutate arbitrary UI descendants.
 
-Do not commit `.godot/` generated import/cache data.
+Follow the design language in `docs/game_design/game_concept_v0.md`:
 
-Keep third-party engine plugins under `addons/`.
+- dark premium cockpit interface,
+- controlled neon accents,
+- compact spacing,
+- strong readability,
+- minimal obstruction of playfield.
 
-Use lowercase `snake_case` paths to avoid case-sensitivity problems across platforms.
+## 19. Visual/gameplay readability
 
-## 19. Scene-file editing rules
+Visual effects are subordinate to gameplay readability.
 
-When editing `.tscn` files manually:
+Never allow background/VFX/UI to obscure:
 
-- preserve valid Godot scene syntax,
+- lane position,
+- hazards,
+- telegraphs,
+- Star Cores,
+- route choices.
+
+Use the game concept's color language consistently:
+
+- purple -> Starfall identity
+- cyan -> energy/navigation/Shield
+- magenta -> danger/Overcharge
+- gold -> value/rewards
+- green -> success/extraction
+- white -> primary readability
+
+## 20. Asset rules
+
+Do not alter source art/audio/fonts unless the task requires it.
+
+Do not commit `.godot/` generated cache/import data.
+
+Third-party Godot plugins belong under `addons/`.
+
+Use lowercase `snake_case` asset paths to avoid cross-platform case issues.
+
+## 21. Scene-file editing
+
+When editing `.tscn` manually:
+
+- preserve valid Godot syntax,
 - preserve resource references,
-- do not invent resource UIDs unless necessary,
-- keep node ownership correct,
-- avoid rewriting unrelated serialized properties,
-- verify every referenced path exists.
+- do not invent UIDs unnecessarily,
+- preserve ownership,
+- keep edits minimal,
+- verify referenced paths exist.
 
-Prefer minimal scene edits.
+## 22. Error handling
 
-## 20. Error handling
+Do not silently hide invalid required state.
 
-Do not silently hide invalid state.
-
-For dependencies that are required by design:
+For required dependencies:
 
 - type them,
 - validate them early,
-- fail clearly during development if they are missing.
+- fail clearly during development if missing.
 
-For optional resources or external files, handle absence deliberately.
+For optional/external files, handle absence deliberately.
 
 Do not use defensive null checks everywhere as a substitute for correct ownership.
 
-## 21. Documentation rules
+## 23. Documentation updates
 
-Update documentation when a change introduces a lasting architectural decision, such as:
+Update documentation only for lasting decisions such as:
 
-- a new top-level system,
+- changed game identity/rules,
+- new top-level architecture,
 - an Autoload,
-- a collision-layer convention,
-- a new reusable component pattern,
-- a significant folder-structure change.
+- collision-layer conventions,
+- reusable component patterns,
+- major folder-structure changes.
 
-Do not update architecture docs for trivial implementation details.
+Do not rewrite architecture docs for trivial implementation details.
 
-## 22. Validation requirement
+If a user changes the game design, update `docs/game_design/game_concept_v0.md` or create a newer concept version as appropriate.
 
-After meaningful changes, validate the project with the Godot 4.7 executable when available.
+## 24. Validation requirement
 
-Preferred project parse/import validation:
+After meaningful Godot changes, validate with the Godot 4.7 executable when available.
+
+Preferred parse/import validation:
 
 ```bash
 godot --headless --path . --editor --quit
 ```
-
-If the executable is named differently, use the installed Godot 4.7 binary.
 
 Also check:
 
 - GDScript parser errors,
 - invalid scene syntax,
 - missing resources,
-- missing NodePaths,
-- incorrect input action names,
-- incorrect collision setup,
+- invalid NodePaths,
+- input action names,
+- collision setup,
 - main scene loading.
 
-If Godot cannot be executed in the environment, explicitly state that runtime/headless validation was not performed.
+If Godot cannot be executed, explicitly report that runtime/headless validation was not performed.
 
-Never claim a successful Godot run unless the command actually ran successfully.
+Never claim a successful Godot run unless the command actually succeeded.
 
-## 23. Change-report format
+## 25. Change-report format
 
-After completing a coding task, report:
+After a coding task, report:
 
 1. what changed,
-2. why those nodes/architecture were chosen,
+2. why the selected Godot nodes/architecture fit the requirement,
 3. files changed,
 4. validation performed,
-5. any remaining limitation.
+5. remaining limitations.
 
-Do not bury errors or skipped validation.
+Do not bury skipped validation or known errors.
 
-## 24. Current staged-development constraint
+## 26. Staged-development constraint
 
-This repository is intentionally being built from a fresh project.
+This repository is intentionally being built incrementally.
 
-Do not implement unrelated future game features ahead of the requested stage.
+For every request:
 
-For every task:
+- understand the current milestone,
+- implement only that milestone,
+- preserve the game concept,
+- keep architecture clean,
+- validate,
+- stop.
 
-- implement the requested stage,
-- keep it clean,
-- validate it,
-- then stop.
-
-The next feature should be added only when requested.
+The existence of later systems in the design bible is not permission to build them early.
