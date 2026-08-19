@@ -1,0 +1,86 @@
+name: Godot Validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Godot 4.7.1 headless validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GODOT_VERSION: 4.7.1
+      GODOT_STATUS: stable
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Godot
+        shell: bash
+        run: |
+          set -euo pipefail
+          release_json="$(curl -fsSL "https://api.github.com/repos/godotengine/godot/releases/tags/${GODOT_VERSION}-${GODOT_STATUS}")"
+          asset_name="Godot_v${GODOT_VERSION}-${GODOT_STATUS}_linux.x86_64.zip"
+          download_url="$(printf '%s' "$release_json" | jq -r --arg name "$asset_name" '.assets[] | select(.name == $name) | .browser_download_url' | head -n 1)"
+          if [[ -z "$download_url" || "$download_url" == "null" ]]; then
+            echo "Could not resolve Godot asset: $asset_name" >&2
+            exit 1
+          fi
+          curl -fsSL "$download_url" -o /tmp/godot.zip
+          unzip -q /tmp/godot.zip -d /tmp/godot
+          install -m 0755 "/tmp/godot/Godot_v${GODOT_VERSION}-${GODOT_STATUS}_linux.x86_64" /usr/local/bin/godot
+          godot --version
+
+      - name: Import and parse project
+        shell: bash
+        run: |
+          set -euo pipefail
+          godot --headless --path . --editor --quit --verbose 2>&1 | tee godot-import.log
+
+      - name: Load required scenes and shaders
+        shell: bash
+        run: |
+          set -euo pipefail
+          godot --headless --path . --script res://dev/ci/validate_resources.gd 2>&1 | tee godot-resources.log
+
+      - name: Smoke-test main scene
+        shell: bash
+        run: |
+          set -euo pipefail
+          godot --headless --path . --quit-after 2 2>&1 | tee godot-main.log
+
+      - name: Smoke-test visual lab pages
+        shell: bash
+        run: |
+          set -euo pipefail
+          scenes=(
+            res://dev/visual_lab/visual_lab.tscn
+            res://dev/visual_lab/pages/backgrounds.tscn
+            res://dev/visual_lab/pages/ships.tscn
+            res://dev/visual_lab/pages/collectibles_powerups.tscn
+            res://dev/visual_lab/pages/hazards_routes.tscn
+            res://dev/visual_lab/pages/effects.tscn
+            res://dev/visual_lab/pages/ui.tscn
+          )
+          for scene in "${scenes[@]}"; do
+            echo "=== $scene ==="
+            godot --headless --path . --quit-after 2 "$scene" 2>&1 | tee -a godot-scenes.log
+          done
+
+      - name: Upload validation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: godot-validation-logs
+          path: |
+            godot-import.log
+            godot-resources.log
+            godot-main.log
+            godot-scenes.log
+          if-no-files-found: ignore
