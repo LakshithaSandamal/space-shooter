@@ -39,8 +39,10 @@ func _request_from_screen_x(screen_x: float) -> void:
 		return
 	lane_change_requested.emit(-1 if screen_x < viewport_width * 0.5 else 1)
 
-func _matches_key(event: InputEventKey, primary_key: Key, alternate_key: Key) -> bool:
-	return event.keycode == primary_key \
-		or event.physical_keycode == primary_key \
-		or event.keycode == alternate_key \
+func _matches_key(event: InputEventKey, primary_key: int, alternate_key: int) -> bool:
+	return (
+		event.keycode == primary_key
+		or event.physical_keycode == primary_key
+		or event.keycode == alternate_key
 		or event.physical_keycode == alternate_key
+	)
