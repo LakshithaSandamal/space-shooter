@@ -161,7 +161,7 @@ func _add_background_card(grid: GridContainer, title: String, sector: int) -> vo
 	content.add_child(preview)
 	var visual := StarfallSpaceBackgroundVisual.new()
 	visual.preview_size = BACKGROUND_PREVIEW_SIZE
-	visual.sector = sector as StarfallSpaceBackgroundVisual.Sector
+	visual.sector = sector
 	preview.add_child(visual)
 
 func _add_ship_card(grid: GridContainer, title: String, ship: int, state: int) -> void:
@@ -169,8 +169,8 @@ func _add_ship_card(grid: GridContainer, title: String, ship: int, state: int) -
 	var preview := _preview_control()
 	content.add_child(preview)
 	var visual := StarfallShipVisual.new()
-	visual.ship_type = ship as StarfallShipVisual.ShipType
-	visual.visual_state = state as StarfallShipVisual.VisualState
+	visual.ship_type = ship
+	visual.visual_state = state
 	visual.display_scale = 1.35
 	visual.position = OBJECT_PREVIEW_SIZE * 0.5 + Vector2(0.0, -4.0)
 	preview.add_child(visual)
@@ -180,8 +180,8 @@ func _add_object_card(grid: GridContainer, title: String, object_kind: int, stat
 	var preview := _preview_control()
 	content.add_child(preview)
 	var visual := StarfallGameObjectVisual.new()
-	visual.kind = object_kind as StarfallGameObjectVisual.Kind
-	visual.visual_state = state as StarfallGameObjectVisual.VisualState
+	visual.kind = object_kind
+	visual.visual_state = state
 	visual.variant = visual_variant
 	visual.display_scale = scale_value
 	visual.position = OBJECT_PREVIEW_SIZE * 0.5
@@ -192,7 +192,7 @@ func _add_effect_card(grid: GridContainer, title: String, effect: int, visual_va
 	var preview := _preview_control()
 	content.add_child(preview)
 	var visual := StarfallEffectVisual.new()
-	visual.effect_type = effect as StarfallEffectVisual.EffectType
+	visual.effect_type = effect
 	visual.variant = visual_variant
 	visual.display_scale = 1.35
 	visual.position = OBJECT_PREVIEW_SIZE * 0.5
@@ -374,10 +374,9 @@ func _preview_control() -> Control:
 	preview.clip_contents = true
 	var background := ColorRect.new()
 	background.color = StarfallVisualTokens.color(&"space_black")
-	background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	preview.add_child(background)
-	background.show_behind_parent = true
+	background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	return preview
 
 func _page_title() -> String:
