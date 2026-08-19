@@ -2,6 +2,8 @@ extends SceneTree
 
 const RESOURCES: PackedStringArray = [
 	"res://scenes/main.tscn",
+	"res://scenes/player/courier.tscn",
+	"res://scenes/ui/run_hud.tscn",
 	"res://dev/visual_lab/visual_lab.tscn",
 	"res://dev/visual_lab/pass1_review.tscn",
 	"res://dev/visual_lab/pages/backgrounds.tscn",
