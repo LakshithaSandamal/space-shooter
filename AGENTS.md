@@ -12,13 +12,20 @@ Before a meaningful implementation task, read the sources relevant to the task i
 2. `docs/visual_design/visual_system_v0.md` — canonical visual semantics, palette, sizing, typography, iconography, and procedural direction.
 3. `docs/visual_design/asset_drawing_system_v1.md` — senior production drawing language and polish rules.
 4. `docs/visual_design/final_visual_inventory_v1.md` — canonical final visual inventory, variants, states, animation requirements, and QA coverage.
-5. `docs/godot_architecture.md` — project architecture.
-6. `docs/node_selection_guide.md` — Godot node selection.
-7. `instructions/godot_ai_instructions.md` — general coding-agent rules.
-8. `instructions/visual_ai_instructions.md` — required additionally for visual/UI/VFX/shader work.
-9. Existing affected scenes/scripts and the relevant `dev/visual_lab/` page — established local implementation.
+5. `docs/development/game_production_roadmap_v1.md` — canonical 10-phase implementation sequence and active production phase.
+6. `docs/godot_architecture.md` — project architecture.
+7. `docs/node_selection_guide.md` — Godot node selection.
+8. `instructions/godot_ai_instructions.md` — general coding-agent rules.
+9. `instructions/visual_ai_instructions.md` — required additionally for visual/UI/VFX/shader work.
+10. Existing affected scenes/scripts and the relevant `dev/` validation/review scene — established local implementation.
 
-The user's current explicit task defines the implementation scope. Do not implement unrelated future gameplay simply because it appears in the design bible or visual inventory.
+The user's current explicit task defines the implementation scope. Do not implement unrelated future gameplay simply because it appears in the design bible, visual inventory, or production roadmap.
+
+## Phase rule
+
+The production roadmap defines sequencing, not permission to prebuild later systems.
+
+Implement only the active/requested phase. A later phase may be started only when the user requests it or explicitly changes the roadmap sequence.
 
 ## Product invariant
 
