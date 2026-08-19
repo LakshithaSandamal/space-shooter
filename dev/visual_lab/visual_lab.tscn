@@ -1,0 +1,58 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://dev/visual_lab/visual_lab.gd" id="1_root"]
+[ext_resource type="PackedScene" path="res://dev/visual_lab/pages/backgrounds.tscn" id="2_backgrounds"]
+[ext_resource type="PackedScene" path="res://dev/visual_lab/pages/ships.tscn" id="3_ships"]
+[ext_resource type="PackedScene" path="res://dev/visual_lab/pages/collectibles_powerups.tscn" id="4_collectibles"]
+[ext_resource type="PackedScene" path="res://dev/visual_lab/pages/hazards_routes.tscn" id="5_hazards"]
+[ext_resource type="PackedScene" path="res://dev/visual_lab/pages/effects.tscn" id="6_effects"]
+[ext_resource type="PackedScene" path="res://dev/visual_lab/pages/ui.tscn" id="7_ui"]
+
+[node name="VisualLab" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_root")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.0196078, 0.027451, 0.0666667, 1)
+
+[node name="Tabs" type="TabContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Backgrounds" parent="Tabs" instance=ExtResource("2_backgrounds")]
+layout_mode = 2
+
+[node name="Ships" parent="Tabs" instance=ExtResource("3_ships")]
+layout_mode = 2
+
+[node name="Collectibles + Powerups" parent="Tabs" instance=ExtResource("4_collectibles")]
+layout_mode = 2
+
+[node name="Hazards + Routes" parent="Tabs" instance=ExtResource("5_hazards")]
+layout_mode = 2
+
+[node name="VFX" parent="Tabs" instance=ExtResource("6_effects")]
+layout_mode = 2
+
+[node name="UI" parent="Tabs" instance=ExtResource("7_ui")]
+layout_mode = 2
