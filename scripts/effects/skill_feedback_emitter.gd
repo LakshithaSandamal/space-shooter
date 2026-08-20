@@ -13,7 +13,7 @@ func play_core_pickup(world_position: Vector2) -> void:
 
 func play_near_miss(world_position: Vector2, streak_count: int) -> void:
 	var is_danger_streak: bool = streak_count >= 3
-	var effect_type: StarfallEffectVisual.EffectType = (
+	var effect_type: int = (
 		StarfallEffectVisual.EffectType.DANGER_STREAK
 		if is_danger_streak
 		else StarfallEffectVisual.EffectType.NEAR_MISS
@@ -21,7 +21,7 @@ func play_near_miss(world_position: Vector2, streak_count: int) -> void:
 	_spawn_effect(effect_type, world_position, 1.1, streak_count)
 
 func _spawn_effect(
-	effect_type: StarfallEffectVisual.EffectType,
+	effect_type: int,
 	world_position: Vector2,
 	display_scale: float,
 	variant_index: int
