@@ -1,0 +1,139 @@
+name: Android Debug APK
+
+on:
+  pull_request:
+    paths:
+      - "project.godot"
+      - "export_presets.cfg"
+      - "scenes/**"
+      - "scripts/**"
+      - "resources/**"
+      - "shaders/**"
+      - "dev/ci/configure_android_export.gd"
+      - ".github/workflows/android-debug-apk.yml"
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-apk:
+    name: Build Phase 3 Android debug APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GODOT_VERSION: 4.7.1
+      GODOT_STATUS: stable
+      APK_PATH: builds/android/starfall-courier-phase3-debug.apk
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Ensure Android SDK components
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT}"
+          yes | "${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager" \
+            "platform-tools" \
+            "build-tools;35.0.1" \
+            "platforms;android-35"
+
+      - name: Install Godot 4.7.1 editor and export templates
+        shell: bash
+        run: |
+          set -euo pipefail
+          release_json="$(curl -fsSL "https://api.github.com/repos/godotengine/godot/releases/tags/${GODOT_VERSION}-${GODOT_STATUS}")"
+
+          editor_asset="Godot_v${GODOT_VERSION}-${GODOT_STATUS}_linux.x86_64.zip"
+          editor_url="$(printf '%s' "$release_json" | jq -r --arg name "$editor_asset" '.assets[] | select(.name == $name) | .browser_download_url' | head -n 1)"
+          test -n "$editor_url" && test "$editor_url" != "null"
+          curl -fsSL "$editor_url" -o /tmp/godot.zip
+          unzip -q /tmp/godot.zip -d /tmp/godot
+          install -m 0755 "/tmp/godot/Godot_v${GODOT_VERSION}-${GODOT_STATUS}_linux.x86_64" /usr/local/bin/godot
+
+          templates_asset="Godot_v${GODOT_VERSION}-${GODOT_STATUS}_export_templates.tpz"
+          templates_url="$(printf '%s' "$release_json" | jq -r --arg name "$templates_asset" '.assets[] | select(.name == $name) | .browser_download_url' | head -n 1)"
+          test -n "$templates_url" && test "$templates_url" != "null"
+          curl -fsSL "$templates_url" -o /tmp/export_templates.tpz
+          rm -rf /tmp/export_templates
+          mkdir -p /tmp/export_templates
+          unzip -q /tmp/export_templates.tpz -d /tmp/export_templates
+          template_dir="${HOME}/.local/share/godot/export_templates/${GODOT_VERSION}.${GODOT_STATUS}"
+          mkdir -p "$template_dir"
+          cp -R /tmp/export_templates/templates/. "$template_dir/"
+
+          godot --version
+          test -f "$template_dir/android_debug.apk"
+
+      - name: Create temporary debug keystore
+        shell: bash
+        run: |
+          set -euo pipefail
+          keytool -genkeypair \
+            -keystore "${RUNNER_TEMP}/starfall-debug.keystore" \
+            -storepass android \
+            -alias androiddebugkey \
+            -keypass android \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -dname "CN=Starfall Courier Debug,O=Starfall Courier,C=LK"
+
+      - name: Configure Godot Android export paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          godot --headless --editor --path . --script res://dev/ci/configure_android_export.gd 2>&1 | tee android-config.log
+          if grep -E 'SCRIPT ERROR:|SHADER ERROR:|^ERROR:' android-config.log; then
+            echo "Godot reported Android configuration errors." >&2
+            exit 1
+          fi
+
+      - name: Export Phase 3 debug APK
+        shell: bash
+        env:
+          GODOT_ANDROID_KEYSTORE_DEBUG_PATH: ${{ runner.temp }}/starfall-debug.keystore
+          GODOT_ANDROID_KEYSTORE_DEBUG_USER: androiddebugkey
+          GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD: android
+        run: |
+          set -euo pipefail
+          mkdir -p "$(dirname "$APK_PATH")"
+          godot --headless --path . --export-debug "Android Phase 3 Debug" "$APK_PATH" 2>&1 | tee android-export.log
+          if grep -E 'SCRIPT ERROR:|SHADER ERROR:|^ERROR:' android-export.log; then
+            echo "Godot reported Android export errors." >&2
+            exit 1
+          fi
+          test -s "$APK_PATH"
+
+      - name: Verify APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          APKSIGNER="${ANDROID_SDK_ROOT}/build-tools/35.0.1/apksigner"
+          AAPT="${ANDROID_SDK_ROOT}/build-tools/35.0.1/aapt"
+          "$APKSIGNER" verify --verbose "$APK_PATH"
+          "$AAPT" dump badging "$APK_PATH" | tee apk-badging.txt
+          sha256sum "$APK_PATH" | tee "${APK_PATH}.sha256"
+          ls -lh "$APK_PATH" "${APK_PATH}.sha256"
+
+      - name: Upload Phase 3 APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: starfall-courier-phase3-android-debug
+          path: |
+            builds/android/starfall-courier-phase3-debug.apk
+            builds/android/starfall-courier-phase3-debug.apk.sha256
+            apk-badging.txt
+            android-export.log
+          if-no-files-found: error
+          retention-days: 14
