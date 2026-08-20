@@ -3,6 +3,7 @@ extends Node
 
 signal player_hit
 signal core_collected(value: int)
+signal near_miss_detected(world_position: Vector2)
 signal wave_spawned(pattern_id: StringName)
 
 const DEFAULT_PATTERN_PATHS: PackedStringArray = [
@@ -12,6 +13,11 @@ const DEFAULT_PATTERN_PATHS: PackedStringArray = [
 	"res://resources/patterns/phase2/wave_left_center_blocked.tres",
 	"res://resources/patterns/phase2/wave_center_right_blocked.tres",
 	"res://resources/patterns/phase2/wave_left_right_blocked.tres",
+	"res://resources/patterns/phase3/wave_reward_center.tres",
+	"res://resources/patterns/phase3/wave_reward_outer.tres",
+	"res://resources/patterns/phase3/wave_pressure_left_center.tres",
+	"res://resources/patterns/phase3/wave_pressure_center_right.tres",
+	"res://resources/patterns/phase3/wave_pressure_outer.tres",
 ]
 
 @export var patterns: Array[StarfallLaneWavePattern] = []
@@ -85,7 +91,7 @@ func _load_default_patterns() -> void:
 		var resource: Resource = load(path)
 		var pattern: StarfallLaneWavePattern = resource as StarfallLaneWavePattern
 		if pattern == null:
-			push_error("Failed to load Phase 2 wave pattern: %s" % path)
+			push_error("Failed to load lane wave pattern: %s" % path)
 			continue
 		patterns.append(pattern)
 
@@ -138,6 +144,7 @@ func _spawn_asteroid(lane_index: int, speed: float) -> void:
 	asteroid.position = Vector2(_lane_x(lane_index), spawn_y)
 	asteroid.configure(speed, _wave_index + lane_index)
 	asteroid.player_hit.connect(_on_asteroid_player_hit)
+	asteroid.near_miss.connect(_on_asteroid_near_miss)
 
 func _spawn_star_core(lane_index: int, speed: float) -> void:
 	var star_core: StarfallStarCore = star_core_scene.instantiate() as StarfallStarCore
@@ -155,6 +162,10 @@ func _lane_x(lane_index: int) -> float:
 func _on_asteroid_player_hit() -> void:
 	if _running:
 		player_hit.emit()
+
+func _on_asteroid_near_miss(world_position: Vector2) -> void:
+	if _running:
+		near_miss_detected.emit(world_position)
 
 func _on_star_core_collected(value: int) -> void:
 	if _running:
