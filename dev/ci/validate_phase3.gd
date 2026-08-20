@@ -117,6 +117,8 @@ func _validate_near_miss_detector() -> bool:
 		push_error("Phase 3 Near-Miss test instances failed to instantiate.")
 		return true
 
+	courier.position = Vector2(100.0, 100.0)
+	asteroid.position = Vector2(500.0, 500.0)
 	root.add_child(courier)
 	root.add_child(asteroid)
 	await process_frame
@@ -151,6 +153,7 @@ func _validate_near_miss_detector() -> bool:
 	await process_frame
 
 	var collision_asteroid: StarfallStandardAsteroid = asteroid_scene.instantiate() as StarfallStandardAsteroid
+	collision_asteroid.position = Vector2(500.0, 500.0)
 	root.add_child(collision_asteroid)
 	await process_frame
 	collision_asteroid.process_mode = Node.PROCESS_MODE_DISABLED
