@@ -1,7 +1,7 @@
 extends SceneTree
 
 func _initialize() -> void:
-	var editor_settings: EditorSettings = EditorSettings.get_singleton()
+	var editor_settings: EditorSettings = EditorInterface.get_editor_settings()
 	if editor_settings == null:
 		push_error("Android export setup requires the Godot editor binary.")
 		quit(1)
@@ -20,7 +20,6 @@ func _initialize() -> void:
 
 	editor_settings.set_setting("export/android/android_sdk_path", android_sdk_path)
 	editor_settings.set_setting("export/android/java_sdk_path", java_sdk_path)
-	editor_settings.save()
 	print("Configured Android SDK: %s" % android_sdk_path)
 	print("Configured Java SDK: %s" % java_sdk_path)
 	quit(0)
