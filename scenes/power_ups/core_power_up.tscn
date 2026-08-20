@@ -1,0 +1,24 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/power_ups/power_up_pickup.gd" id="1_pickup"]
+[ext_resource type="Script" path="res://scripts/visuals/game_object_visual.gd" id="2_visual"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_power"]
+radius = 21.0
+
+[node name="CorePowerUp" type="Area2D"]
+collision_layer = 8
+collision_mask = 1
+monitoring = true
+monitorable = false
+script = ExtResource("1_pickup")
+
+[node name="Visual" type="Node2D" parent="."]
+unique_name_in_owner = true
+script = ExtResource("2_visual")
+kind = 2
+visual_state = 2
+display_scale = 1.15
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_power")
