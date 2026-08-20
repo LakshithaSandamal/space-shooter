@@ -142,10 +142,10 @@ Create the mastery layer that makes repeated runs rewarding.
 
 A skilled player can intentionally maintain combo and perform Near Misses without the game creating ambiguous or duplicate rewards.
 
-## Implementation record
+## Completion record
 
-- Status: **IMPLEMENTED / PLAYTEST PENDING**
-- Implemented: `2026-08-20`
+- Status: **COMPLETE**
+- Completed: `2026-08-20`
 - Star Cores score using the current multiplier and then advance the combo up to `x20`.
 - Combo grace is time-limited and resets to `x1` on expiry.
 - Near Misses stabilize active combo grace rather than increasing combo directly.
@@ -154,7 +154,7 @@ A skilled player can intentionally maintain combo and perform Near Misses withou
 - Reward/breather and pressure/no-core authored waves expand pacing without changing the fairness invariant.
 - Procedural Near-Miss/Core VFX and semantic audio-cue signals are wired; final audio assets remain a later production concern.
 - Godot CI: Phase 1 + Phase 2 regressions, Phase 3 deterministic scoring/grace/streak/Near-Miss tests, main-scene smoke test, and visual-lab regression passed.
-- Phase status becomes COMPLETE only after local play confirms Near-Miss feel, combo timing, HUD readability, and scoring feedback.
+- Local Android playtest: confirmed working by the user before Phase 4 started.
 
 ---
 
@@ -180,6 +180,22 @@ Add tactical recovery and risk tools without changing the control model.
 ## Completion test
 
 All three core power-ups can be collected, clearly read, activated correctly, expire predictably, and never require additional movement controls.
+
+## Implementation record
+
+- Status: **IMPLEMENTED / PLAYTEST PENDING**
+- Implemented: `2026-08-20`
+- Shield provides one collision save, then a short recovery/invulnerability window before protection fully ends.
+- Time Warp slows hazards, Star Cores, power-up motion, distance progression, and spawn pressure while lane input remains fully responsive.
+- Time Warp and Overcharge refresh their durations when recollected while active.
+- Overcharge doubles Star Core and Near-Miss reward score only; it does not double distance score or combo growth.
+- Core power-ups spawn deterministically after the early run, rotate Shield → Time Warp → Overcharge, and only use lanes that are neither blocked nor occupied by a Star Core in that wave.
+- Power-ups use dedicated collision layer 4 (`power_ups`) and detect player layer 1.
+- HUD shows only currently active power-ups and their remaining duration where relevant.
+- Courier procedural states and existing Shield/Time Warp/Overcharge VFX are connected to gameplay; semantic audio hooks are emitted for later audio production.
+- Godot CI: Phase 1–3 regressions, Phase 4 activation/expiry/reward/collision/safe-lane validation, main-scene smoke test, and visual-lab regression passed.
+- Android CI: Phase 4 ARM64 debug APK export, signing, verification, and artifact upload passed.
+- Phase status becomes COMPLETE only after local/mobile play confirms pickup readability, spawn timing, Shield recovery feel, Time Warp pacing, Overcharge feedback, and HUD clarity.
 
 ---
 
@@ -378,8 +394,8 @@ A signed release candidate can be installed on target devices, complete the full
 |---|---|
 | 1. Core Run Foundation | **COMPLETE** |
 | 2. First Playable Survival Loop | **COMPLETE** |
-| 3. Skill / Combo / Near Miss | **IMPLEMENTED / PLAYTEST PENDING** |
-| 4. Core Power-Ups | Planned |
+| 3. Skill / Combo / Near Miss | **COMPLETE** |
+| 4. Core Power-Ups | **IMPLEMENTED / PLAYTEST PENDING** |
 | 5. Sectors / Threat / Hazards | Planned |
 | 6. Routes / Contracts / Extraction | Planned |
 | 7. Career Progression | Planned |

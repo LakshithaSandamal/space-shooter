@@ -87,11 +87,21 @@ jobs:
             exit 1
           fi
 
+      - name: Validate Phase 4 power-up rules
+        shell: bash
+        run: |
+          set -euo pipefail
+          godot --headless --path . --script res://dev/ci/validate_phase4.gd 2>&1 | tee godot-phase4.log
+          if grep -E 'SCRIPT ERROR:|SHADER ERROR:|^ERROR:' godot-phase4.log; then
+            echo "Godot reported Phase 4 validation errors." >&2
+            exit 1
+          fi
+
       - name: Smoke-test main scene
         shell: bash
         run: |
           set -euo pipefail
-          godot --headless --path . --quit-after 5 2>&1 | tee godot-main.log
+          godot --headless --path . --quit-after 7 2>&1 | tee godot-main.log
           if grep -E 'SCRIPT ERROR:|SHADER ERROR:|^ERROR:' godot-main.log; then
             echo "Godot reported main-scene errors." >&2
             exit 1
@@ -132,6 +142,7 @@ jobs:
             godot-phase1.log
             godot-phase2.log
             godot-phase3.log
+            godot-phase4.log
             godot-main.log
             godot-scenes.log
           if-no-files-found: ignore

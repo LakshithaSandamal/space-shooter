@@ -11,6 +11,7 @@ signal collected(value: int)
 @onready var _visual: StarfallGameObjectVisual = %Visual
 
 var _active: bool = true
+var _motion_scale: float = 1.0
 
 func _ready() -> void:
 	_visual.kind = StarfallGameObjectVisual.Kind.STAR_CORE
@@ -20,7 +21,7 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	if not _active:
 		return
-	position.y += fall_speed * delta
+	position.y += fall_speed * _motion_scale * delta
 	if position.y > despawn_y:
 		queue_free()
 
@@ -29,6 +30,9 @@ func configure(speed: float, variant_index: int) -> void:
 	visual_variant = posmod(variant_index, 3)
 	if is_node_ready():
 		_visual.variant = visual_variant
+
+func set_motion_scale(value: float) -> void:
+	_motion_scale = clampf(value, 0.25, 1.0)
 
 func _on_body_entered(body: Node2D) -> void:
 	if not _active:

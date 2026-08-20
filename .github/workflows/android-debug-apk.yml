@@ -20,13 +20,13 @@ permissions:
 
 jobs:
   build-apk:
-    name: Build Phase 3 Android debug APK
+    name: Build Phase 4 Android debug APK
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
       GODOT_VERSION: 4.7.1
       GODOT_STATUS: stable
-      APK_PATH: builds/android/starfall-courier-phase3-debug.apk
+      APK_PATH: builds/android/starfall-courier-phase4-debug.apk
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -53,14 +53,12 @@ jobs:
         run: |
           set -euo pipefail
           release_json="$(curl -fsSL "https://api.github.com/repos/godotengine/godot/releases/tags/${GODOT_VERSION}-${GODOT_STATUS}")"
-
           editor_asset="Godot_v${GODOT_VERSION}-${GODOT_STATUS}_linux.x86_64.zip"
           editor_url="$(printf '%s' "$release_json" | jq -r --arg name "$editor_asset" '.assets[] | select(.name == $name) | .browser_download_url' | head -n 1)"
           test -n "$editor_url" && test "$editor_url" != "null"
           curl -fsSL "$editor_url" -o /tmp/godot.zip
           unzip -q /tmp/godot.zip -d /tmp/godot
           install -m 0755 "/tmp/godot/Godot_v${GODOT_VERSION}-${GODOT_STATUS}_linux.x86_64" /usr/local/bin/godot
-
           templates_asset="Godot_v${GODOT_VERSION}-${GODOT_STATUS}_export_templates.tpz"
           templates_url="$(printf '%s' "$release_json" | jq -r --arg name "$templates_asset" '.assets[] | select(.name == $name) | .browser_download_url' | head -n 1)"
           test -n "$templates_url" && test "$templates_url" != "null"
@@ -71,7 +69,6 @@ jobs:
           template_dir="${HOME}/.local/share/godot/export_templates/${GODOT_VERSION}.${GODOT_STATUS}"
           mkdir -p "$template_dir"
           cp -R /tmp/export_templates/templates/. "$template_dir/"
-
           godot --version
           test -f "$template_dir/android_debug.apk"
 
@@ -101,7 +98,7 @@ jobs:
           grep -F "Configured Android SDK:" android-config.log >/dev/null
           grep -F "Configured Java SDK:" android-config.log >/dev/null
 
-      - name: Export Phase 3 debug APK
+      - name: Export Phase 4 debug APK
         shell: bash
         env:
           GODOT_ANDROID_KEYSTORE_DEBUG_PATH: ${{ runner.temp }}/starfall-debug.keystore
@@ -110,7 +107,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "$(dirname "$APK_PATH")"
-          godot --headless --path . --export-debug "Android Phase 3 Debug" "$APK_PATH" 2>&1 | tee android-export.log
+          godot --headless --path . --export-debug "Android Phase 4 Debug" "$APK_PATH" 2>&1 | tee android-export.log
           export_errors="$(grep -E 'SCRIPT ERROR:|SHADER ERROR:|^ERROR:' android-export.log | grep -v 'No project icon specified' || true)"
           if [[ -n "$export_errors" ]]; then
             printf '%s\n' "$export_errors"
@@ -130,13 +127,13 @@ jobs:
           sha256sum "$APK_PATH" | tee "${APK_PATH}.sha256"
           ls -lh "$APK_PATH" "${APK_PATH}.sha256"
 
-      - name: Upload Phase 3 APK
+      - name: Upload Phase 4 APK
         uses: actions/upload-artifact@v4
         with:
-          name: starfall-courier-phase3-android-debug
+          name: starfall-courier-phase4-android-debug
           path: |
-            builds/android/starfall-courier-phase3-debug.apk
-            builds/android/starfall-courier-phase3-debug.apk.sha256
+            builds/android/starfall-courier-phase4-debug.apk
+            builds/android/starfall-courier-phase4-debug.apk.sha256
             apk-badging.txt
             android-export.log
           if-no-files-found: error

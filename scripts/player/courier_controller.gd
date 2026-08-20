@@ -72,6 +72,26 @@ func crash() -> void:
 	_visual.visual_state = StarfallShipVisual.VisualState.CRASHED
 	_visual.queue_redraw()
 
+func set_power_visuals(shielded: bool, time_warped: bool, overcharged: bool) -> void:
+	if not _active:
+		return
+	var next_state: int = StarfallShipVisual.VisualState.NORMAL
+	if shielded:
+		next_state = StarfallShipVisual.VisualState.SHIELDED
+	elif overcharged:
+		next_state = StarfallShipVisual.VisualState.OVERCHARGED
+	elif time_warped:
+		next_state = StarfallShipVisual.VisualState.TIME_WARP
+	if _visual.visual_state != next_state:
+		_visual.visual_state = next_state
+		_visual.queue_redraw()
+
+func flash_impact() -> void:
+	if not _active:
+		return
+	_visual.visual_state = StarfallShipVisual.VisualState.IMPACT
+	_visual.queue_redraw()
+
 func get_lane_index() -> int:
 	return current_lane
 
