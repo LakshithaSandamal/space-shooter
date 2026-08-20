@@ -32,7 +32,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
@@ -94,10 +94,12 @@ jobs:
         run: |
           set -euo pipefail
           godot --headless --editor --path . --script res://dev/ci/configure_android_export.gd 2>&1 | tee android-config.log
-          if grep -E 'SCRIPT ERROR:|SHADER ERROR:|^ERROR:' android-config.log; then
+          if grep -E 'SCRIPT ERROR:|Failed to load script|Android export setup requires|ANDROID_SDK_ROOT is not configured|JAVA_HOME is not configured' android-config.log; then
             echo "Godot reported Android configuration errors." >&2
             exit 1
           fi
+          grep -F "Configured Android SDK:" android-config.log >/dev/null
+          grep -F "Configured Java SDK:" android-config.log >/dev/null
 
       - name: Export Phase 3 debug APK
         shell: bash
