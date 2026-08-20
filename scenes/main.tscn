@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scripts/core/run_controller.gd" id="1_run"]
 [ext_resource type="Script" path="res://scripts/visuals/space_background_visual.gd" id="2_background"]
@@ -6,6 +6,8 @@
 [ext_resource type="Script" path="res://scripts/core/run_input_router.gd" id="4_input"]
 [ext_resource type="PackedScene" path="res://scenes/ui/run_hud.tscn" id="5_hud"]
 [ext_resource type="PackedScene" path="res://scenes/systems/wave_spawner.tscn" id="6_spawner"]
+[ext_resource type="PackedScene" path="res://scenes/systems/skill_system.tscn" id="7_skill"]
+[ext_resource type="PackedScene" path="res://scenes/effects/skill_feedback_emitter.tscn" id="8_effects"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_run")
@@ -25,12 +27,21 @@ unique_name_in_owner = true
 unique_name_in_owner = true
 z_index = 2
 
+[node name="Effects" type="Node2D" parent="World"]
+
+[node name="SkillEffects" parent="World/Effects" instance=ExtResource("8_effects")]
+unique_name_in_owner = true
+z_index = 8
+
 [node name="Player" parent="World" instance=ExtResource("3_player")]
 unique_name_in_owner = true
 z_index = 5
 position = Vector2(360, 1015)
 
 [node name="WaveSpawner" parent="." instance=ExtResource("6_spawner")]
+unique_name_in_owner = true
+
+[node name="SkillSystem" parent="." instance=ExtResource("7_skill")]
 unique_name_in_owner = true
 
 [node name="InputRouter" type="Node" parent="."]

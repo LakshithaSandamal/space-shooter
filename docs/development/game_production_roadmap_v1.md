@@ -108,6 +108,13 @@ Turn lane movement into a real endless survival run.
 
 A player can start a run, dodge asteroids, collect Star Cores, travel farther, crash, and immediately restart.
 
+## Completion record
+
+- Status: **COMPLETE**
+- Completed: `2026-08-20`
+- Godot CI: 4.7.1 import/parse, resource loading, Phase 1 regression, Phase 2 fairness/collision/difficulty validation, main-scene smoke test, and visual-lab regression passed.
+- Local playtest: confirmed working by the user before Phase 3 started.
+
 ---
 
 # Phase 3 — Skill, Combo, and Near-Miss Loop
@@ -134,6 +141,20 @@ Create the mastery layer that makes repeated runs rewarding.
 ## Completion test
 
 A skilled player can intentionally maintain combo and perform Near Misses without the game creating ambiguous or duplicate rewards.
+
+## Implementation record
+
+- Status: **IMPLEMENTED / PLAYTEST PENDING**
+- Implemented: `2026-08-20`
+- Star Cores score using the current multiplier and then advance the combo up to `x20`.
+- Combo grace is time-limited and resets to `x1` on expiry.
+- Near Misses stabilize active combo grace rather than increasing combo directly.
+- Consecutive Near Miss feedback progresses through `CLOSE CALL`, `DANGER STREAK`, and `EDGE RUN`.
+- Standard Asteroids own their Near-Miss envelope, collision suppression, and one-award-per-asteroid rule.
+- Reward/breather and pressure/no-core authored waves expand pacing without changing the fairness invariant.
+- Procedural Near-Miss/Core VFX and semantic audio-cue signals are wired; final audio assets remain a later production concern.
+- Godot CI: Phase 1 + Phase 2 regressions, Phase 3 deterministic scoring/grace/streak/Near-Miss tests, main-scene smoke test, and visual-lab regression passed.
+- Phase status becomes COMPLETE only after local play confirms Near-Miss feel, combo timing, HUD readability, and scoring feedback.
 
 ---
 
@@ -356,8 +377,8 @@ A signed release candidate can be installed on target devices, complete the full
 | Phase | Status |
 |---|---|
 | 1. Core Run Foundation | **COMPLETE** |
-| 2. First Playable Survival Loop | **NEXT / PLANNED** |
-| 3. Skill / Combo / Near Miss | Planned |
+| 2. First Playable Survival Loop | **COMPLETE** |
+| 3. Skill / Combo / Near Miss | **IMPLEMENTED / PLAYTEST PENDING** |
 | 4. Core Power-Ups | Planned |
 | 5. Sectors / Threat / Hazards | Planned |
 | 6. Routes / Contracts / Extraction | Planned |
