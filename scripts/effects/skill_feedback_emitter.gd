@@ -20,6 +20,10 @@ func play_near_miss(world_position: Vector2, streak_count: int) -> void:
 	)
 	_spawn_effect(effect_type, world_position, 1.1, streak_count)
 
+func clear_effects() -> void:
+	for child: Node in get_children():
+		child.queue_free()
+
 func _spawn_effect(
 	effect_type: int,
 	world_position: Vector2,
