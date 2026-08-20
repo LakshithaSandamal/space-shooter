@@ -12,10 +12,13 @@ var _near_miss_events: int = 0
 var _hit_events: int = 0
 
 func _initialize() -> void:
+	call_deferred("_run_validation")
+
+func _run_validation() -> void:
 	var failed: bool = false
 	failed = _validate_patterns() or failed
 	failed = _validate_skill_system() or failed
-	failed = _validate_near_miss_detector() or failed
+	failed = await _validate_near_miss_detector() or failed
 
 	if not failed:
 		print("Phase 3 validation passed: combo scoring, grace timing, streak feedback, Near-Miss uniqueness, collision suppression, and pattern fairness are deterministic.")
@@ -116,6 +119,7 @@ func _validate_near_miss_detector() -> bool:
 
 	root.add_child(courier)
 	root.add_child(asteroid)
+	await process_frame
 	courier.process_mode = Node.PROCESS_MODE_DISABLED
 	asteroid.process_mode = Node.PROCESS_MODE_DISABLED
 
@@ -143,10 +147,12 @@ func _validate_near_miss_detector() -> bool:
 		push_error("One asteroid must award at most one Near Miss.")
 		failed = true
 
-	asteroid.free()
+	asteroid.queue_free()
+	await process_frame
 
 	var collision_asteroid: StarfallStandardAsteroid = asteroid_scene.instantiate() as StarfallStandardAsteroid
 	root.add_child(collision_asteroid)
+	await process_frame
 	collision_asteroid.process_mode = Node.PROCESS_MODE_DISABLED
 	collision_asteroid.near_miss.connect(_on_test_near_miss)
 	collision_asteroid.player_hit.connect(_on_test_player_hit)
@@ -160,8 +166,9 @@ func _validate_near_miss_detector() -> bool:
 		push_error("A true collision must suppress the Near-Miss reward.")
 		failed = true
 
-	collision_asteroid.free()
-	courier.free()
+	collision_asteroid.queue_free()
+	courier.queue_free()
+	await process_frame
 	return failed
 
 func _on_test_near_miss(_world_position: Vector2) -> void:
