@@ -1,13 +1,15 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/systems/wave_spawner.gd" id="1_spawner"]
 [ext_resource type="PackedScene" path="res://scenes/hazards/standard_asteroid.tscn" id="2_asteroid"]
 [ext_resource type="PackedScene" path="res://scenes/collectibles/star_core.tscn" id="3_core"]
+[ext_resource type="PackedScene" path="res://scenes/power_ups/core_power_up.tscn" id="4_power"]
 
 [node name="WaveSpawner" type="Node"]
 script = ExtResource("1_spawner")
 asteroid_scene = ExtResource("2_asteroid")
 star_core_scene = ExtResource("3_core")
+power_up_scene = ExtResource("4_power")
 
 [node name="WaveTimer" type="Timer" parent="."]
 unique_name_in_owner = true
