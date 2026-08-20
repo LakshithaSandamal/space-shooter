@@ -165,7 +165,7 @@ func _on_power_up_collected(power_up_type: int) -> void:
 		return
 	if power_up_type < StarfallPowerUpSystem.PowerUpType.SHIELD or power_up_type > StarfallPowerUpSystem.PowerUpType.OVERCHARGE:
 		return
-	_power_up_system.activate(power_up_type as StarfallPowerUpSystem.PowerUpType)
+	_power_up_system.activate(power_up_type)
 	_power_up_effects.play_pickup(power_up_type, _player.global_position)
 	_hud.show_power_up_feedback(power_up_type)
 	_wave_spawner.set_world_motion_scale(_power_up_system.world_motion_scale())
