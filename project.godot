@@ -25,6 +25,7 @@ window/stretch/mode="canvas_items"
 2d_physics/layer_1="player"
 2d_physics/layer_2="hazards"
 2d_physics/layer_3="collectibles"
+2d_physics/layer_4="power_ups"
 
 [rendering]
 
