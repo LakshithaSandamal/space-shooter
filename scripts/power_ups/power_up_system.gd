@@ -2,8 +2,8 @@ class_name StarfallPowerUpSystem
 extends Node
 
 signal state_changed
-signal power_up_activated(power_up_type: PowerUpType)
-signal power_up_expired(power_up_type: PowerUpType)
+signal power_up_activated(power_up_type: int)
+signal power_up_expired(power_up_type: int)
 signal shield_consumed
 signal audio_cue_requested(cue_id: StringName, intensity: int)
 
@@ -41,25 +41,23 @@ func advance(delta: float) -> void:
 		changed = true
 
 	if time_warp_remaining > 0.0:
-		var was_active: bool = true
 		time_warp_remaining = maxf(0.0, time_warp_remaining - delta)
 		changed = true
-		if was_active and time_warp_remaining <= 0.0:
+		if time_warp_remaining <= 0.0:
 			power_up_expired.emit(PowerUpType.TIME_WARP)
 			audio_cue_requested.emit(&"time_warp_end", 1)
 
 	if overcharge_remaining > 0.0:
-		var overcharge_was_active: bool = true
 		overcharge_remaining = maxf(0.0, overcharge_remaining - delta)
 		changed = true
-		if overcharge_was_active and overcharge_remaining <= 0.0:
+		if overcharge_remaining <= 0.0:
 			power_up_expired.emit(PowerUpType.OVERCHARGE)
 			audio_cue_requested.emit(&"overcharge_end", 1)
 
 	if changed:
 		state_changed.emit()
 
-func activate(power_up_type: PowerUpType) -> void:
+func activate(power_up_type: int) -> void:
 	match power_up_type:
 		PowerUpType.SHIELD:
 			shield_charge = 1
@@ -71,6 +69,8 @@ func activate(power_up_type: PowerUpType) -> void:
 		PowerUpType.OVERCHARGE:
 			overcharge_remaining = overcharge_duration
 			audio_cue_requested.emit(&"overcharge_start", 1)
+		_:
+			return
 
 	power_up_activated.emit(power_up_type)
 	state_changed.emit()
